@@ -1,6 +1,8 @@
 package com.wehotel.filter;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.core.annotation.Order;
@@ -37,9 +39,16 @@ public class FizzGatewayFilter implements WebFilter {
 //		https://gist.github.com/cer/04ce15ba46f54634312740135fcfdeea
 		// 直接返回响应结果，跳过后面的filter和controller
 		Map<String, Object> config1= new HashMap<String, Object>();
+		List<Map> requests = new ArrayList<Map>();
+		Map <String ,Object>requestConfig = new HashMap<String, Object>(); 
+		requestConfig.put("url","http://localhost:8080/json");
+		requests.add(requestConfig);
+		requests.add(requestConfig);
+		config1.put("requests", requests);
 		Step step1 = new Step.Builder().read(config1);
 		Map<String, Object> config2= new HashMap<String, Object>();
-		Step step2 = new Step.Builder().read(config1);
+		config2.put("requests", requests);
+		Step step2 = new Step.Builder().read(config2);
 		Pipeline process = new Pipeline();
 		process.addStep(step1);
 		process.addStep(step2);

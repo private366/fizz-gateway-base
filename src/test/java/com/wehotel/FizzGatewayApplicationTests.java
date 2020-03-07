@@ -1,16 +1,16 @@
 package com.wehotel;
-
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.BiFunction;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.server.reactive.ServerHttpRequest;
-import org.springframework.http.server.reactive.ServerHttpResponse;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ReactiveHttpOutputMessage;
+import org.springframework.web.reactive.function.BodyInserter;
+import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import com.alibaba.fastjson.JSON;
@@ -37,9 +37,16 @@ class FizzGatewayApplicationTests {
 //		https://gist.github.com/cer/04ce15ba46f54634312740135fcfdeea
 		// 直接返回响应结果，跳过后面的filter和controller
 		Map<String, Object> config1= new HashMap<String, Object>();
+		List<Map> requests = new ArrayList<Map>();
+		Map <String ,Object>requestConfig = new HashMap<String, Object>(); 
+		requestConfig.put("url","http://localhost:8080/json");
+		requests.add(requestConfig);
+		requests.add(requestConfig);
+		config1.put("requests", requests);
 		Step step1 = new Step.Builder().read(config1);
 		Map<String, Object> config2= new HashMap<String, Object>();
-		Step step2 = new Step.Builder().read(config1);
+		config2.put("requests", requests);
+		Step step2 = new Step.Builder().read(config2);
 		Pipeline process = new Pipeline();
 		process.addStep(step1);
 		process.addStep(step2);
@@ -47,7 +54,18 @@ class FizzGatewayApplicationTests {
 		result.block();
 		
 	}
-	
+	@Test
+	void testWebClient() {
+		WebClient client = WebClient.create("http://localhost:8080");
+		String jsonStr = JSON.toJSONString(new Object());
+		BodyInserter<String, ReactiveHttpOutputMessage> body = BodyInserters.fromObject(jsonStr);
+		WebClient.RequestBodySpec uriSpec = client
+				  .method(HttpMethod.POST).uri("/json").contentType(MediaType.APPLICATION_JSON);
+ 
+		String result = uriSpec.body(body).retrieve().bodyToMono(String.class).block();
+		System.out.print(result);
+	}
+	 
 
 
 
