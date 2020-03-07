@@ -14,6 +14,7 @@ public class TestController {
     public Mono<Map<String,Object>> sayJson() {
     	Map<String,Object> map = new HashMap<String,Object>();
     	map.put("say", "hi");
+    	System.out.println("say hi");
         return Mono.just(map);
     }
 }

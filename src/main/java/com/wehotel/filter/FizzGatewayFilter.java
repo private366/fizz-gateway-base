@@ -1,5 +1,8 @@
 package com.wehotel.filter;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.core.annotation.Order;
 import org.springframework.core.io.buffer.DefaultDataBufferFactory;
 import org.springframework.http.MediaType;
@@ -9,6 +12,12 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
+
+import com.alibaba.fastjson.JSON;
+import com.wehotel.fizz.Pipeline;
+import com.wehotel.fizz.Step;
+
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import org.springframework.web.reactive.function.client.WebClient;
@@ -24,18 +33,28 @@ public class FizzGatewayFilter implements WebFilter {
 		if (path.contains("/json")) {
 			return chain.filter(exchange);
 		}
+		ServerHttpResponse serverHttpResponse =  exchange.getResponse();
 //		https://gist.github.com/cer/04ce15ba46f54634312740135fcfdeea
 		// 直接返回响应结果，跳过后面的filter和controller
-		WebClient client = WebClient.create("http://localhost:8080");
-		ServerHttpResponse serverHttpResponse =  exchange.getResponse();
-		Mono<Void>userMono = client.get()
-		            .uri("/json")
-		            .accept(request.getHeaders().getAccept().toArray(new MediaType[0]))
-		            .exchange()
-		            .flatMap(clientResponse -> {
-		              return serverHttpResponse.writeWith(clientResponse.bodyToFlux(String.class).map(s -> defaultDataBufferFactory.wrap(s.getBytes())));
-		            });
-		return userMono;
+		Map<String, Object> config1= new HashMap<String, Object>();
+		Step step1 = new Step.Builder().read(config1);
+		Map<String, Object> config2= new HashMap<String, Object>();
+		Step step2 = new Step.Builder().read(config1);
+		Pipeline process = new Pipeline();
+		process.addStep(step1);
+		process.addStep(step2);
+		Mono<?>result = process.run();
+	
+		return result.flatMap(clientResponse -> {
+			String jsonString = JSON.toJSONString(clientResponse);
+			return serverHttpResponse.writeWith(Flux.just(exchange.getResponse().bufferFactory().wrap(jsonString.getBytes())));
+		});
+//		            .accept(request.getHeaders().getAccept().toArray(new MediaType[0]))
+//		            .exchange()
+//		            .flatMap(clientResponse -> {
+//		              return serverHttpResponse.writeWith(clientResponse.bodyToFlux(String.class).map(s -> defaultDataBufferFactory.wrap(s.getBytes())));
+//		            });
+//		return userMono;
 		 
 //		
 //		response.setStatusCode(HttpStatus.OK);
