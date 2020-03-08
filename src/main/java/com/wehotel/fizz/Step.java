@@ -1,18 +1,23 @@
 package com.wehotel.fizz;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ReactiveHttpOutputMessage;
-import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.reactive.function.BodyInserter;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import com.alibaba.fastjson.JSON;
+import com.wehotel.fizz.input.Input;
+import com.wehotel.fizz.input.InputConfig;
+import com.wehotel.fizz.input.InputContext;
+import com.wehotel.fizz.input.InputFactory;
+import com.wehotel.fizz.input.InputType;
 
 import reactor.core.publisher.Mono;
 
@@ -20,65 +25,67 @@ public class Step {
 
 	private String name; 
 	
-	private List<RequestConfig> requestConfigs = new ArrayList<RequestConfig>();
+	private Map<String, InputConfig> requestConfigs = new HashMap<String, InputConfig>();
 
 	public static class Builder {
 		public Step read(Map<String, Object> config) {
 			Step step = new Step();
-			List<Map> requests= (List<Map>) config.get("requests");
-			for(Map request: requests) {
-				RequestConfig requestConfig = new RequestConfig();
-				requestConfig.setUrl((String)request.get("url"));
-				step.addRequestConfig(requestConfig);
+			Map<String, Map> requests= (Map<String, Map>) config.get("requests");
+			for(String name: requests.keySet()) {
+				Map requestConfig = requests.get(name);
+				InputConfig inputConfig = InputFactory.createInputConfig(requestConfig);
+				step.addRequestConfig(name, inputConfig);
 			}
 			return step;
 		}
 	}
 	
-	private List<StepResponse> stepContext = null;
-	StepResponse lastStepResponse = null;
-	public void loadContext(List<StepResponse> aStepContext, StepResponse response ) {
-		stepContext = aStepContext;
+	private Map<String, StepResponse> stepContext;
+	private StepResponse lastStepResponse = null;
+	private Map<String, Input> inputs = new HashMap<String, Input>();
+	public void beforeRun(Map<String, StepResponse> stepContext2, StepResponse response ) {
+		stepContext = stepContext2;
 		lastStepResponse = response;
+		Map<String, InputConfig> configs = this.getRequestConfigs();
+		for(String configName :configs.keySet()) {
+			InputConfig inputConfig = configs.get(configName);
+			InputType type = inputConfig.getType();
+			Input input = InputFactory.createInput(type.toString());
+			input.setConfig(inputConfig);
+			input.setName(configName);
+			InputContext context = new InputContext(stepContext, lastStepResponse);
+			input.beforeRun(context); 
+			inputs.put(input.getName(), input);
+		}
 	}
 
-	public List<Mono> configureMonos() {
-		List<RequestConfig> configs = this.getRequestConfigs();
+	public List<Mono> run() {
 		List<Mono> monos = new ArrayList<Mono>();  
-		for(RequestConfig config :configs) {
-			WebClient client = WebClient.create(config.getBaseUrl());
-			WebClient.RequestBodySpec uriSpec = client
-					  .method(HttpMethod.POST).uri(config.getPath()).contentType(MediaType.APPLICATION_JSON);
-			Mono<String>singleMono = null;
-			String jsonStr = null;
-			if (lastStepResponse != null) {
-				jsonStr = JSON.toJSONString(lastStepResponse.getResult());
-			} else {
-				jsonStr = JSON.toJSONString(new Object());
-			}
-			BodyInserter<String, ReactiveHttpOutputMessage> body = BodyInserters.fromObject(jsonStr);
-			singleMono = 
-					uriSpec.body(body).retrieve().bodyToMono(String.class);
-		
+		for(String name :inputs.keySet()) {
+			Input input = inputs.get(name);
+			Mono<Map>singleMono = input.run(); 
 			monos.add(singleMono);
 		}
-		return monos;
+		return monos;	
+	}
+
+	public void afeterRun() {
 		
 	}
 	
-	public boolean addRequestConfig(RequestConfig requestConfig) {
-		return requestConfigs.add(requestConfig);
+	public InputConfig addRequestConfig(String name,  InputConfig requestConfig) {
+		return requestConfigs.put(name, requestConfig);
 	}
  
 
-	public List<RequestConfig> getRequestConfigs() {
+	public Map<String, InputConfig> getRequestConfigs() {
 		return requestConfigs;
 	}
 
 
 	public String getName() {
 		if (name == null) {
-			return name = "" + (int)(Math.random()*100);
+			return name = "step" + (int)(Math.random()*100);
 		}
 		return name;
 	}

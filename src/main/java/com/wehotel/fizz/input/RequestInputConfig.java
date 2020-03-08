@@ -1,10 +1,16 @@
-package com.wehotel.fizz;
+package com.wehotel.fizz.input;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Map;
 
-public class RequestConfig {
+public class RequestInputConfig extends InputConfig{
 	private URL url ;
+	public RequestInputConfig(Map configBody) {
+		String url = (String) configBody.get("url");
+		setUrl(url);
+	}
+
 	public String getBaseUrl() {
 		return url.getProtocol()+ "://"+ url.getHost() + ":" + url.getPort();
 	}
@@ -14,7 +20,6 @@ public class RequestConfig {
 	}
 
 	public void setUrl(String string) {
-		// TODO Auto-generated method stub
 		try {
 			url = new URL(string);
 		} catch (MalformedURLException e) {
@@ -23,5 +28,4 @@ public class RequestConfig {
 		}
 		
 	}
-
 }
