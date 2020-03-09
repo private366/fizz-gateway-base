@@ -1,10 +1,7 @@
 package com.wehotel.fizz;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Mono;
 import com.wehotel.fizz.input.InputType;
@@ -55,7 +52,7 @@ class PipelineTests {
 		pipeline.addStep(step2);
 		
 		
-		Mono<?>result = pipeline.run();
+		Mono<?>result = pipeline.run(null);
 		result.block();
 	}
 	 

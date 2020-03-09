@@ -52,7 +52,7 @@ public class FizzGatewayFilter implements WebFilter {
 		Pipeline process = new Pipeline();
 		process.addStep(step1);
 		process.addStep(step2);
-		Mono<?>result = process.run();
+		Mono<?>result = process.run(null);
 	
 		return result.flatMap(clientResponse -> {
 			String jsonString = JSON.toJSONString(clientResponse);

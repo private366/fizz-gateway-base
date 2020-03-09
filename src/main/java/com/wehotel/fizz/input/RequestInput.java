@@ -6,6 +6,10 @@ import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
+
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ReactiveHttpOutputMessage;
@@ -30,14 +34,13 @@ public class RequestInput extends Input {
 	private ResponseSpec getClientSpecFromContext(InputConfig aConfig, InputContext inputContext) {
 		RequestInputConfig config = (RequestInputConfig)aConfig;
 		WebClient client = WebClient.create(config.getBaseUrl());
+		HttpMethod method = HttpMethod.valueOf(config.getMethod()); 
 		WebClient.RequestBodySpec uriSpec = client
-			  .method(HttpMethod.POST).uri(config.getPath()).contentType(MediaType.APPLICATION_JSON);
+			  .method(method).uri(config.getPath()+ (StringUtils.isEmpty(config.getQueryStr())  ? "" : ("?" + config.getQueryParams())));
 		String jsonStr = JSON.toJSONString(new Object());
 		if (inputContext != null && inputContext.getResponses() != null) {
 			Map<String, Object> responses = inputContext.getResponses();
-			
 			String pathMapping = this.getConfig().getPathMapping();
-			
 			if (pathMapping != null && !StringUtils.isEmpty(pathMapping)) {
 				ObjectMapper mapper = new ObjectMapper();
 				String data;
@@ -63,6 +66,35 @@ public class RequestInput extends Input {
 			}
 		}
 		
+		ScriptEngineManager factory = new ScriptEngineManager();
+		ScriptEngine engine = factory.getEngineByName("groovy");
+		config.getVariables();
+		engine.put("config", config);
+		if (!config.getHeaders().containsKey("Content-Type")) {
+			//defalut content-type
+			uriSpec.header("Content-Type", "application/json; charset=UTF-8");
+		}
+		for(String key:config.getHeaders().keySet()) {
+			String value = (String)config.getHeaders().get(key);
+			if (value instanceof String) {
+				String maybeEvalStr = (String)value;
+				if (maybeEvalStr.startsWith("groovy")) {
+					String script = maybeEvalStr.substring("groovy ".length());
+					try {
+						String scriptResult = (String) engine.eval(script);
+						uriSpec.header(key, value);
+					} catch (ScriptException e) {
+						// Todo:do something when failed
+						e.printStackTrace();
+					}	
+				} else {
+					uriSpec.header(key, value);		
+				}
+			} else {	
+				uriSpec.header(key, value);
+			}
+		}
+		
 		BodyInserter<String, ReactiveHttpOutputMessage> body = BodyInserters.fromObject(jsonStr);
 		return  uriSpec.body(body).retrieve();
 	}
@@ -84,9 +116,5 @@ public class RequestInput extends Input {
 			return Mono.just(result);
 		});
 	}
-
-
-	 
-	
 
 }

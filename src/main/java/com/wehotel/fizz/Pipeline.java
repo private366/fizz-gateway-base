@@ -1,14 +1,11 @@
 package com.wehotel.fizz;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Stack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.reactive.function.client.WebClient;
 
 import com.alibaba.fastjson.JSON;
 import com.wehotel.filter.FizzLogFilter;
@@ -29,7 +26,7 @@ public class Pipeline {
 	    System.out.println("input : " + n);
 	}
 	
-	public Mono<?> run() {
+	public Mono<?> run(Map<String, Object> request) {
 		LinkedList<Step> opSteps = (LinkedList<Step>) steps.clone();
 		Step step1 = opSteps.removeFirst();
 		step1.beforeRun(null, null);
@@ -48,7 +45,6 @@ public class Pipeline {
 		});
 	}
 
-	
 	@SuppressWarnings("unchecked")
 	public Mono<StepResponse> createStep(Step step) {
 		List<Mono> monos = step.run();
