@@ -10,8 +10,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 public class RequestInputConfig extends InputConfig{
 	private URL url ;
-	private Map<String, Object>variables = new HashMap<String, Object>();
-	private  Map<String, String>headers =  new HashMap<String, String>();
+	private Map<String, Object> variables = new HashMap<String, Object>();
+	private  Map<String, Object> headers =  new HashMap<String, Object>();
 	private String method ;
 	public RequestInputConfig(Map configBody) {
 		String url = (String) configBody.get("url");

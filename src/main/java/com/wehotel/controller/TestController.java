@@ -2,6 +2,8 @@ package com.wehotel.controller;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -12,11 +14,21 @@ import reactor.core.publisher.Mono;
 
 @RestController
 public class TestController {
-    @PostMapping("/json")
-    public Mono<Map<String,Object>> sayJson(@RequestBody Map body) {
-    	Map<String,Object> map = new HashMap<String,Object>();
-    	map.put("requestBody", JSON.toJSONString(body));
-    	System.out.println("say hi");
-        return Mono.just(map);
-    }
+
+	@PostMapping("/json")
+	public Mono<Map<String, Object>> sayJson(@RequestBody Map body) {
+		Map<String, Object> map = new HashMap<String, Object>();
+		map.put("requestBody", JSON.toJSONString(body));
+		System.out.println("say hi");
+		return Mono.just(map);
+	}
+
+	@GetMapping("/json")
+	public Mono<Map<String, Object>> sayJson() {
+		Map<String, Object> map = new HashMap<String, Object>();
+		map.put("requestBody", "hello world");
+		System.out.println("hello world");
+		return Mono.just(map);
+	}
+
 }
