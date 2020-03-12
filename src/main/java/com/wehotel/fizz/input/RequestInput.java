@@ -35,17 +35,18 @@ public class RequestInput extends Input {
 		RequestInputConfig config = (RequestInputConfig)aConfig;
 		WebClient client = WebClient.create(config.getBaseUrl());
 		HttpMethod method = HttpMethod.valueOf(config.getMethod()); 
+		String url = config.getPath()+ (StringUtils.isEmpty(config.getQueryStr())  ? "" : ("?" + config.getQueryParams()));
 		WebClient.RequestBodySpec uriSpec = client
-			  .method(method).uri(config.getPath()+ (StringUtils.isEmpty(config.getQueryStr())  ? "" : ("?" + config.getQueryParams())));
+			  .method(method).uri(url);
 		String jsonStr = JSON.toJSONString(new Object());
-		if (inputContext != null && inputContext.getResponses() != null) {
-			Map<String, Object> responses = inputContext.getResponses();
+		if (inputContext != null && inputContext.getStepContext() != null) {
+			Map<String, Object> stepContext = inputContext.getStepContext();
 			String pathMapping = this.getConfig().getPathMapping();
 			if (pathMapping != null && !StringUtils.isEmpty(pathMapping)) {
 				ObjectMapper mapper = new ObjectMapper();
 				String data;
 				try {
-					data = mapper.writeValueAsString(responses);
+					data = mapper.writeValueAsString(stepContext);
 					InputStream sourceStream = new ByteArrayInputStream(data.getBytes());
 					
 			         InputStream transformSpec = new ByteArrayInputStream(pathMapping.getBytes());;
@@ -53,7 +54,8 @@ public class RequestInput extends Input {
 			         Object sourceJson;
 
 			         //assuming sourceStream, and transformSpec have been initialized
-			         Configuration configuration = Configuration.builder()               .options(Option.CREATE_MISSING_PROPERTIES_ON_DEFINITE_PATH).build();
+			         Configuration configuration = Configuration.builder()               
+			        		 .options(Option.CREATE_MISSING_PROPERTIES_ON_DEFINITE_PATH).build();
 			         sourceJson = configuration.jsonProvider().parse(sourceStream,Charset.defaultCharset().name());
 			         spec = configuration.transformationProvider().spec(transformSpec, configuration);
 			         Object transformed = configuration.transformationProvider().transform(sourceJson,spec, configuration);
@@ -96,6 +98,17 @@ public class RequestInput extends Input {
 		}
 		
 		BodyInserter<String, ReactiveHttpOutputMessage> body = BodyInserters.fromObject(jsonStr);
+		
+		// put request info into stepContext
+		request = new HashMap<>();
+		this.stepResponse.getRequests().put(name, request);
+		request.put("url", url);
+		request.put("method", method);
+		request.put("requestBody", JSON.parse(jsonStr));
+		uriSpec.headers(httpHeaders->{
+			request.put("headers", httpHeaders);
+		});
+		
 		return  uriSpec.body(body).retrieve();
 	}
 	
@@ -112,6 +125,8 @@ public class RequestInput extends Input {
 			Map<String, Object> result = new HashMap<String, Object>();
 			result.put("data", item);
 			result.put("request", this);
+			
+			this.request.put("responseBody", JSON.parse(item));
 			// TODO: change to Class
 			return Mono.just(result);
 		});

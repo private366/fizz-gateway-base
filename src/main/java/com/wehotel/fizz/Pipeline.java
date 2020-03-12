@@ -17,7 +17,7 @@ import reactor.core.publisher.Mono;
 public class Pipeline {
 	private static final Logger LOGGER = LoggerFactory.getLogger(FizzLogFilter.class);
 	private LinkedList<Step> steps = new LinkedList<Step>();
-	private Map<String, StepResponse> stepContext= new HashMap<String, StepResponse>();
+	private Map<String, Object> stepContext= new HashMap<String, Object>();
 	public void addStep(Step step) {
 		steps.add(step);
 	}
@@ -26,10 +26,11 @@ public class Pipeline {
 	    System.out.println("input : " + n);
 	}
 	
-	public Mono<?> run(Map<String, Object> request) {
+	public Mono<?> run(Map<String, Object> input) {
+		stepContext.put("input", input);
 		LinkedList<Step> opSteps = (LinkedList<Step>) steps.clone();
 		Step step1 = opSteps.removeFirst();
-		step1.beforeRun(null, null);
+		step1.beforeRun(stepContext, null);
 		Mono<?> result = createStep(step1).expand(response -> {
 			if (opSteps.isEmpty()) {
 				return Mono.empty();
@@ -41,6 +42,7 @@ public class Pipeline {
 		return result.map(clientResponse -> {
 			String jsonString = JSON.toJSONString(clientResponse);
 			LOGGER.info("jsonString '{}'", jsonString);
+			LOGGER.info("stepContext '{}'", JSON.toJSONString(stepContext));
 			return clientResponse;
 		});
 	}
@@ -54,9 +56,10 @@ public class Pipeline {
 			item1.put(input.getName() , item2.get("data"));
 			return item1;
 		}).flatMap(item -> {
-			StepResponse response = new StepResponse(step, item);
-			stepContext.put(step.getName(), response);
-			return Mono.just(response);
+			StepResponse stepResponse = (StepResponse)stepContext.get(step.getName());
+			stepResponse.setResult(item);
+			stepContext.put(step.getName(), stepResponse);
+			return Mono.just(stepResponse);
 		});
 		return result;
 //		Mono<Map>result = Mono.zip().flatMap(tuple->{

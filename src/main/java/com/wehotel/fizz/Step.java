@@ -40,12 +40,14 @@ public class Step {
 		}
 	}
 	
-	private Map<String, StepResponse> stepContext;
+	private Map<String, Object> stepContext;
 	private StepResponse lastStepResponse = null;
 	private Map<String, Input> inputs = new HashMap<String, Input>();
-	public void beforeRun(Map<String, StepResponse> stepContext2, StepResponse response ) {
+	public void beforeRun(Map<String, Object> stepContext2, StepResponse response ) {
 		stepContext = stepContext2;
 		lastStepResponse = response;
+		StepResponse stepResponse = new StepResponse(this, null, new HashMap<String, Map<String, Object>>());
+		stepContext.put(name, stepResponse);
 		Map<String, InputConfig> configs = this.getRequestConfigs();
 		for(String configName :configs.keySet()) {
 			InputConfig inputConfig = configs.get(configName);
@@ -53,6 +55,7 @@ public class Step {
 			Input input = InputFactory.createInput(type.toString());
 			input.setConfig(inputConfig);
 			input.setName(configName);
+			input.setStepResponse(stepResponse);
 			InputContext context = new InputContext(stepContext, lastStepResponse);
 			input.beforeRun(context); 
 			inputs.put(input.getName(), input);

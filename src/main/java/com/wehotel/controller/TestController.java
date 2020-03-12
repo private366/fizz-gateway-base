@@ -26,7 +26,8 @@ public class TestController {
 	@GetMapping("/json")
 	public Mono<Map<String, Object>> sayJson() {
 		Map<String, Object> map = new HashMap<String, Object>();
-		map.put("requestBody", "hello world");
+		map.put("user", "ABC");
+		map.put("hello", "world");
 		System.out.println("hello world");
 		return Mono.just(map);
 	}

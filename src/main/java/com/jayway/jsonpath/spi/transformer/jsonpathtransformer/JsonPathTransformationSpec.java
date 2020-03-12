@@ -355,8 +355,9 @@ public class JsonPathTransformationSpec implements TransformationSpec {
         if (WRAPPER_TYPES.contains(srcValue.getClass())) {
             return true;
         }
-
-        return false;
+        
+        // francis.dong: return true to skip scalar checking
+        return true;
     }
 
 

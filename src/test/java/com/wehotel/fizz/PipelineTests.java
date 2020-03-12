@@ -35,8 +35,8 @@ class PipelineTests {
 		innerConfig1.put("url","http://localhost:8080/json");
 		innerConfig1.put("pathMapping", "{\n" + 
 				"  \"pathMappings\": [{\n" + 
-				"    \"source\": \"$.step1.request1\",\n" + 
-				"    \"target\": \"$.requestBody\"\n" + 
+				"    \"source\": \"$.step1.requests.request1.responseBody\",\n" + 
+				"    \"target\": \"$.requestBody2\"\n" + 
 				"  }]\n" + 
 				"}");
 		requestConfig2.put("type", InputType.REQUEST.toString());
@@ -51,8 +51,17 @@ class PipelineTests {
 		pipeline.addStep(step1);
 		pipeline.addStep(step2);
 		
+		Map<String,Object> input = new HashMap<>();
+		input.put("url", "/hello");
+		input.put("method", "GET");
+		Map<String,Object> headers = new HashMap<String,Object>();
+		headers.put("traceId", "afdfdsfdsfdsfdsfs");
+		input.put("headers", headers);
+		Map<String,Object> requestBody = new HashMap<String,Object>();
+		requestBody.put("userId", 123);
+		input.put("requestBody", requestBody);
 		
-		Mono<?>result = pipeline.run(null);
+		Mono<?>result = pipeline.run(input);
 		result.block();
 	}
 	 

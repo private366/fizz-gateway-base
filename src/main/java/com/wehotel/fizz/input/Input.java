@@ -11,6 +11,8 @@ public class Input {
 	protected InputConfig config;
 	protected InputContext inputContext;
 	protected StepResponse lastStepResponse = null;
+	protected Map<String, Object> request;
+	protected StepResponse stepResponse;
 	
 	public void setConfig(InputConfig inputConfig) {
 		config = inputConfig;
@@ -36,6 +38,18 @@ public class Input {
 	public void setName(String configName) {
 		this.name = configName;
 		
+	}
+	public Map<String, Object> getRequest() {
+		return request;
+	}
+	public void setRequest(Map<String, Object> request) {
+		this.request = request;
+	}
+	public StepResponse getStepResponse() {
+		return stepResponse;
+	}
+	public void setStepResponse(StepResponse stepResponse) {
+		this.stepResponse = stepResponse;
 	}
 	
 	 
