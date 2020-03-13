@@ -4,24 +4,20 @@ package com.wehotel.fizz.input;
 public class InputConfig {
 	
 	private InputType type;
-	protected String pathMapping;
+	protected DataMapping dataMapping;
 	public InputType getType() {
 		return type;
 	}
 	public void setType(InputType typeEnum) {
 		this.type = typeEnum;
 	}
-
 	
-	public void setPathMapping(String pathMapping) {
-		this.pathMapping = pathMapping;
+	public DataMapping getDataMapping() {
+		return dataMapping;
 	}
-
-
 	
-	public String getPathMapping() {
-		return pathMapping;
+	public void setDataMapping(DataMapping dataMapping) {
+		this.dataMapping = dataMapping;
 	}
-
 
 }

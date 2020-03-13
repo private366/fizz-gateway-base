@@ -1,5 +1,6 @@
 package com.wehotel.fizz.input;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import com.wehotel.fizz.StepResponse;
@@ -11,13 +12,14 @@ public class Input {
 	protected InputConfig config;
 	protected InputContext inputContext;
 	protected StepResponse lastStepResponse = null;
-	protected Map<String, Object> request;
+	protected Map<String, Object> request = new HashMap<>();
+	protected Map<String, Object> response = new HashMap<>();
 	protected StepResponse stepResponse;
 	
 	public void setConfig(InputConfig inputConfig) {
 		config = inputConfig;
 	}
-	protected InputConfig getConfig() {
+	public InputConfig getConfig() {
 		return config;
 	}
 

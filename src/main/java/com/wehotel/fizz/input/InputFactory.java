@@ -18,7 +18,7 @@ public class InputFactory {
 				break;
 		}
 		inputConfig.setType(typeEnum);
-		inputConfig.setPathMapping((String)configBody.get("pathMapping"));
+		inputConfig.setDataMapping((DataMapping)configBody.get("dataMapping"));
 		
 		return inputConfig;
 	}
