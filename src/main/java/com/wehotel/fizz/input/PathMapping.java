@@ -47,6 +47,9 @@ public class PathMapping {
 	}
 
 	public static Map<String, Object> transform(Map<String, Object> stepContext, Map<String, String> rules) {
+		if (rules.isEmpty()) {
+			return new HashMap<>();
+		}
 		ObjectMapper mapper = new ObjectMapper();
 		String data;
 		try {

@@ -1,0 +1,196 @@
+{
+    "name": "aggr-demo-api",
+    "config": {
+        "type": "REQUEST",
+        "method": "POST",
+        "path": "/aggr-demo/hotel/rates",
+        "dataMapping": {
+            "response": {
+                "body": {
+                    "aaa": "step1.result",
+                    "bbb": "step1.requests.request1.response.body.hello",
+                    "ccc": "step2.requests.request3.response.body.hello"
+                }
+            }
+        },
+        "stepConfigs": [{
+            "name": "step1",
+            "stop": false,
+            "dataMapping": {
+                "response": {
+                    "body": {
+                        "rates": "step1.requests.request1.response.body.hello",
+                        "roomTypes": "step1.requests.request1.response.body.user"
+                    }
+                }
+            },
+            "requests": {
+                "request1": {
+                    "type": "REQUEST",
+                    "config": {
+                        "url": "http://localhost:8080/json",
+                        "method": "GET",
+                        "timeout": 2000,
+                        "dataMapping": {
+                            "request": {
+                                "headers": {
+                                    "abc": "step1.requests.request1.headers.xyz"
+                                },
+                                "body": {
+                                    "inn.innId": "step1.requests.request1.response.id"
+                                },
+                                "params": {
+                                    "userId": "input.requestBody.userId"
+                                }
+                            },
+                            "response": {
+                                "headers": {
+                                    "abc": "step1.requests.request1.headers.xyz"
+                                },
+                                "body": {
+                                    "inn.innId": "step1.requests.request1.response.id"
+                                }
+                            }
+                        },
+                        "headers": {
+                            "a": "b"
+                        },
+                        "params": {
+                            "a": "b"
+                        },
+                        "body": {
+
+                        }
+                    }
+                },
+                "request2": {
+                    "type": "REQUEST",
+                    "config": {
+                        "url": "http://localhost:8080/json",
+                        "method": "GET",
+                        "timeout": 2000,
+                        "dataMapping": {
+                            "request": {
+                                "headers": {
+                                    "abc": "step1.requests.request1.headers.xyz"
+                                },
+                                "body": {
+                                    "inn.innId": "step1.requests.request1.response.id"
+                                },
+                                "params": {
+                                    "userId": "input.requestBody.userId"
+                                }
+                            },
+                            "response": {
+                                "headers": {
+                                    "abc": "step1.requests.request1.headers.xyz"
+                                },
+                                "body": {
+                                    "inn.innId": "step1.requests.request1.response.id"
+                                }
+                            }
+                        },
+                        "headers": {
+                            "a": "b"
+                        },
+                        "params": {
+                            "a": "b"
+                        },
+                        "body": {
+
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "name": "step2",
+            "stop": false,
+            "dataMapping": {
+                "response": {
+                    "body": {
+                        
+                    }
+                }
+            },
+            "requests": {
+                "request1": {
+                    "type": "REQUEST",
+                    "config": {
+                        "url": "http://localhost:8080/json",
+                        "method": "GET",
+                        "timeout": 2000,
+                        "dataMapping": {
+                            "request": {
+                                "headers": {
+                                    "abc": "step1.requests.request1.headers.xyz"
+                                },
+                                "body": {
+                                    "abc.requestBody22": "step1.requests.request1.response.body"
+                                },
+                                "params": {
+                                    "userId": "input.requestBody.userId"
+                                }
+                            },
+                            "response": {
+                                "headers": {
+                                    "abc": "step1.requests.request1.headers.xyz"
+                                },
+                                "body": {
+                                    "inn.innId": "step1.requests.request1.response.id"
+                                }
+                            }
+                        },
+                        "headers": {
+                            "a": "b"
+                        },
+                        "params": {
+                            "a": "b"
+                        },
+                        "body": {
+
+                        }
+                    }
+                },
+                "request1": {
+                    "type": "REQUEST",
+                    "config": {
+                        "url": "http://localhost:8080/json",
+                        "method": "GET",
+                        "timeout": 2000,
+                        "dataMapping": {
+                            "request": {
+                                "headers": {
+                                    "abc": "step1.requests.request1.headers.xyz"
+                                },
+                                "body": {
+                                    "abc.requestBody22": "step1.requests.request1.response.body"
+                                },
+                                "params": {
+                                    "userId": "input.requestBody.userId"
+                                }
+                            },
+                            "response": {
+                                "headers": {
+                                    "abc": "step1.requests.request1.headers.xyz"
+                                },
+                                "body": {
+                                    "inn.innId": "step1.requests.request1.response.id"
+                                }
+                            }
+                        },
+                        "headers": {
+                            "a": "b"
+                        },
+                        "params": {
+                            "a": "b"
+                        },
+                        "body": {
+
+                        }
+                    }
+                }
+            }
+        }]
+    }
+}

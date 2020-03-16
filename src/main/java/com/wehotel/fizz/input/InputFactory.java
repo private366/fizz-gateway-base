@@ -18,7 +18,7 @@ public class InputFactory {
 				break;
 		}
 		inputConfig.setType(typeEnum);
-		inputConfig.setDataMapping((DataMapping)configBody.get("dataMapping"));
+		inputConfig.setDataMapping((Map<String, Object>) configBody.get("dataMapping"));
 		
 		return inputConfig;
 	}

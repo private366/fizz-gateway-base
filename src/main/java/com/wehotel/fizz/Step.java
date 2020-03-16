@@ -13,7 +13,6 @@ import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import com.alibaba.fastjson.JSON;
-import com.wehotel.fizz.input.DataMapping;
 import com.wehotel.fizz.input.Input;
 import com.wehotel.fizz.input.InputConfig;
 import com.wehotel.fizz.input.InputContext;
@@ -29,7 +28,7 @@ public class Step {
 	// 是否在执行完当前step就返回
 	private boolean stop; 
 	
-	private DataMapping dataMapping;
+	private Map<String, Object> dataMapping;
 	
 	private Map<String, InputConfig> requestConfigs = new HashMap<String, InputConfig>();
 
@@ -112,14 +111,13 @@ public class Step {
 		this.stop = stop;
 	}
 
-	public DataMapping getDataMapping() {
+	public Map<String, Object> getDataMapping() {
 		return dataMapping;
 	}
 
-	public void setDataMapping(DataMapping dataMapping) {
+	public void setDataMapping(Map<String, Object> dataMapping) {
 		this.dataMapping = dataMapping;
 	}
-
 
 
 }

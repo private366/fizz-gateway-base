@@ -32,6 +32,21 @@ import com.wehotel.fizz.StepResponse;
 import reactor.core.publisher.Mono;
 
 public class RequestInput extends Input {
+	private InputType type;
+	protected Map<String, Object> dataMapping;
+	public InputType getType() {
+		return type;
+	}
+	public void setType(InputType typeEnum) {
+		this.type = typeEnum;
+	}
+	
+	public Map<String, Object> getDataMapping() {
+		return dataMapping;
+	}
+	public void setDataMapping(Map<String, Object> dataMapping) {
+		this.dataMapping = dataMapping;
+	}
 	
 	private void doRequestMapping(InputConfig aConfig, InputContext inputContext) {
 		RequestInputConfig config = (RequestInputConfig)aConfig;
@@ -51,29 +66,35 @@ public class RequestInput extends Input {
 		// 数据转换
 		if (inputContext != null && inputContext.getStepContext() != null) {
 			Map<String, Object> stepContext = inputContext.getStepContext();
-			DataMapping dataMapping = this.getConfig().getDataMapping();
+			Map<String, Object> dataMapping = this.getConfig().getDataMapping();
 			if (dataMapping != null) {
-				Map<String, Map<String, String>> requestMapping = dataMapping.getRequest();
+				Map<String, Map<String, String>> requestMapping = (Map<String, Map<String, String>>) dataMapping.get("request");
 				if(requestMapping != null && !StringUtils.isEmpty(requestMapping)) {
 					
 					// headers
 					if(requestMapping.get("headers") != null) {
 						Map<String, Object> result = PathMapping.transform(stepContext, requestMapping.get("headers"));
-						config.getHeaders().putAll(result);
+						if(result != null) {
+							config.getHeaders().putAll(result);
+						}
 						request.put("headers", config.getHeaders());
 					}
 					
 					// params
 					if(requestMapping.get("params") != null) {
 						Map<String, Object> result = PathMapping.transform(stepContext, requestMapping.get("params"));
-						config.getParams().putAll(result);
+						if(result != null) {
+							config.getParams().putAll(result);
+						}
 						request.put("params", config.getParams());
 					}
 					
 					// body
 					if(requestMapping.get("body") != null) {
 						Map<String, Object> result = PathMapping.transform(stepContext, requestMapping.get("body"));
-						config.getBody().putAll(result);
+						if(result != null) {
+							config.getBody().putAll(result);
+						}
 						request.put("body", config.getBody());
 					}
 					
@@ -96,16 +117,18 @@ public class RequestInput extends Input {
 		// 数据转换
 		if (inputContext != null && inputContext.getStepContext() != null) {
 			Map<String, Object> stepContext = inputContext.getStepContext();
-			DataMapping dataMapping = this.getConfig().getDataMapping();
+			Map<String, Object> dataMapping = this.getConfig().getDataMapping();
 			if (dataMapping != null) {
-				Map<String, Map<String, String>> responseMapping = dataMapping.getResponse();
+				Map<String, Map<String, String>> responseMapping = (Map<String, Map<String, String>>) dataMapping.get("response");
 				if(responseMapping != null && !StringUtils.isEmpty(responseMapping)) {
 					
 					// headers
 					if(responseMapping.get("headers") != null) {
 						Map<String, Object> result = PathMapping.transform(stepContext, responseMapping.get("headers"));
 						Map<String, Object> headers = (Map<String, Object>) response.get("headers");
-						headers.putAll(result);
+						if(result != null) {
+							headers.putAll(result);
+						}
 						response.put("headers", headers);
 					}
 					
@@ -113,7 +136,9 @@ public class RequestInput extends Input {
 					if(responseMapping.get("body") != null) {
 						Map<String, Object> result = PathMapping.transform(stepContext, responseMapping.get("body"));
 						Map<String, Object> body = (Map<String, Object>) response.get("body");
-						body.putAll(result);
+						if(result != null) {
+							body.putAll(result);
+						}
 						response.put("body", body);
 					}
 					

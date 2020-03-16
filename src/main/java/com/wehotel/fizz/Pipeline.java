@@ -95,7 +95,7 @@ public class Pipeline {
 	private StepResponse doStepDataMapping(Step step) {
 		StepResponse stepResponse = (StepResponse)stepContext.get(step.getName());
 		if (step.getDataMapping() != null) {
-			Map<String, Map<String, String>> responseMapping = step.getDataMapping().getResponse();
+			Map<String, Map<String, String>> responseMapping = (Map<String, Map<String, String>>) step.getDataMapping().get("response");
 			if(responseMapping != null && !StringUtils.isEmpty(responseMapping)) {
 				// body
 				if(responseMapping.get("body") != null) {
@@ -125,7 +125,7 @@ public class Pipeline {
 		}
 		response = group.get("response");
 		if (input != null && input.getConfig() != null && input.getConfig().getDataMapping() != null) {
-			Map<String, Map<String, String>> responseMapping = input.getConfig().getDataMapping().getResponse();
+			Map<String, Map<String, String>> responseMapping = (Map<String, Map<String, String>>) input.getConfig().getDataMapping().get("response");
 			if(responseMapping != null && !StringUtils.isEmpty(responseMapping)) {
 				// headers
 				if(responseMapping.get("headers") != null) {

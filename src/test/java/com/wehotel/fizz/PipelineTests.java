@@ -6,9 +6,7 @@ import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Mono;
 
 import com.wehotel.fizz.input.ClientInputConfig;
-import com.wehotel.fizz.input.DataMapping;
 import com.wehotel.fizz.input.Input;
-import com.wehotel.fizz.input.InputConfig;
 import com.wehotel.fizz.input.InputType;
  
 
@@ -36,8 +34,9 @@ class PipelineTests {
 		Step step1 = new Step.Builder().read(config1);
 		step1.setName( "step1");
 		step1.setStop(true);
-		DataMapping step1DataMapping = new DataMapping();
-		Map<String, Map<String, String>> step1dmResponse = step1DataMapping.getResponse(); 
+		Map<String, Object> step1DataMapping = new HashMap<>();
+		Map<String, Map<String, String>> step1dmResponse = new HashMap<>(); 
+		step1DataMapping.put("response", step1dmResponse);
 		Map <String ,String> step1RespBodyMapping = new HashMap<>(); 
 		step1RespBodyMapping.put("rates", "step1.requests.request1.response.body.hello");
 		step1RespBodyMapping.put("roomTypes", "step1.requests.request1.response.body.user");
@@ -52,8 +51,9 @@ class PipelineTests {
 		Map <String ,Object>innerConfig1 =  new HashMap<String, Object>();
 		innerConfig1.put("url","http://localhost:8080/json");
 		
-		DataMapping dataMapping = new DataMapping();
-		Map<String, Map<String, String>> requestMapping = dataMapping.getRequest(); 
+		Map<String, Object> dataMapping = new HashMap<>();
+		Map<String, Map<String, String>> requestMapping = new HashMap<>(); 
+		dataMapping.put("request", requestMapping);
 		Map <String ,String> bodyMapping = new HashMap<>(); 
 		bodyMapping.put("abc.requestBody22", "step1.requests.request1.response.body");
 		requestMapping.put("body", bodyMapping);
@@ -96,13 +96,15 @@ class PipelineTests {
 		clientInputConfig.setPath("/hotel/rates");
 		clientInputConfig.setHeaders(null);
 		
-		DataMapping inputDataMapping = new DataMapping();
-		Map<String, Map<String, String>> dmRequest = inputDataMapping.getRequest(); 
+		Map<String, Object> inputDataMapping = new HashMap<>();
+		Map<String, Map<String, String>> dmRequest = new HashMap<>();
+		inputDataMapping.put("request", dmRequest);
 		Map <String ,String> inputReqScript = new HashMap<>(); 
 		inputReqScript.put("source", "todo...");
 		dmRequest.put("script", inputReqScript);
 		
-		Map<String, Map<String, String>> dmResponse = inputDataMapping.getResponse(); 
+		Map<String, Map<String, String>> dmResponse = new HashMap<>();
+		inputDataMapping.put("response", dmResponse); 
 		Map <String ,String> inputRespBodyMapping = new HashMap<>(); 
 		inputRespBodyMapping.put("aaaa", "step1.result");
 		inputRespBodyMapping.put("bbb", "step1.requests.request1.response.body.hello");
