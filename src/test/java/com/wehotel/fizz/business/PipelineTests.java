@@ -23,8 +23,8 @@ class PipelineTests {
 		Map<String, Map> requests1 = new HashMap<String, Map>();
 		 
 		Map <String ,Object>innerConfig1 =  new HashMap<String, Object>();
-		innerConfig1.put("url","http://172.25.33.79/trip-inninfo-api/inn/getHotelInfo");
-		innerConfig1.put("METHOD","GET");
+		innerConfig1.put("url","http://172.25.63.197:9090/trip-inninfo-api/inn/getHotelInfo");
+		innerConfig1.put("method","GET");
 		
 		Map <String ,Object>requestConfig = new HashMap<String, Object>();
 		requestConfig.put("type", InputType.REQUEST.toString());
@@ -33,7 +33,7 @@ class PipelineTests {
 		
 		innerConfig1 =  new HashMap<String, Object>();
 		innerConfig1.put("url","http://172.25.33.79/we-meb/rest/we-meb/api/getMebInfo");
-		innerConfig1.put("Method","POST");
+		innerConfig1.put("method","POST");
 		Map <String ,Object> headers = new HashMap<String ,Object>();
 		headers.put("X-AUTH-HEADER", "groovy import com.wehotel.fizz.business.RsaClientUtil; RsaClientUtil.encodeNet(config.get(\"token\")+\",\"+config.get(\"appid\")+\",\"+System.currentTimeMillis() )");
 		headers.put("Content-Type", "application/json; charset=UTF-8");
@@ -61,7 +61,7 @@ class PipelineTests {
 		Map<String, Map> requests2 = new HashMap<String, Map>();
 		Map <String ,Object>requestConfig2 = new HashMap<String, Object>(); 
 		Map <String ,Object>innerConfig2 =  new HashMap<String, Object>();
-		innerConfig2.put("url","http://172.25.62.58:8090/coupon-services/rest/couponServices/queryCoupons_h5order");
+		innerConfig2.put("url","http://172.25.62.58:8080/coupon-services/rest/couponServices/queryCoupons_h5order");
 		headers = new HashMap<String ,Object>();
 		headers.put("X-AUTH-HEADER", "F09854B5B98220CAAE4E1F7DD8CAF94A");
 		headers.put("Content-Type", "application/json; charset=UTF-8");
@@ -69,7 +69,7 @@ class PipelineTests {
 		
 		innerConfig2.put("pathMapping", "{\n" + 
 				"  \"pathMappings\": [{\n" + 
-				"    \"source\": \"$.step1.request1\",\n" + 
+				"    \"source\": \"$.step1.requests.request1\",\n" + 
 				"    \"target\": \"$.memId\"\n" + 
 				"  }]\n" + 
 				"}");
@@ -88,22 +88,56 @@ class PipelineTests {
 		pipeline.addStep(step1);
 		pipeline.addStep(step2);
 		
-		Map<String, Object>input = new HashMap<String, Object>();
-		input.put("innId", "JJ65001");
-		input.put("channelCode", "CA00001");
-		input.put("brandId", "");
+		Map<String,Object> input = new HashMap<>();
+		input.put("url", "/hello");
+		input.put("method", "POST");
+		Map<String,Object> inputHeaders = new HashMap<String,Object>();
+		inputHeaders.put("traceId", "afdfdsfdsfdsfdsfs");
+		input.put("headers", inputHeaders);
+		Map<String,Object> requestBody = new HashMap<String,Object>();
+		input.put("requestBody", requestBody);
 		
-		String reqStr = "{\"clientInfo\":{\"deviceId\":\"D8920140-4843-4E9F-93C1-4B98F5133BFC\",\"os\":\"ios\",\"appVersion\":\"4.0.3\",\"channelId\":\"309488\",\"hardwareModel\":\"iPhone 6 Plus\",\"systemVersion\":\"11.4.1\",\"versionCode\":\"71\"},\"memberId\":0,\"memberType\":9,\"channelCode\":\"CA00001\",\"bkMemberType\":0,\"primeMeb\":false,\"primeLevel\":0,\"traceId\":\"rbsRHc2c-196272484\",\"languageCode\":\"0\",\"brandId\":\"98\",\"innId\":\"XRH000080\",\"roomTypeId\":null,\"beginDate\":\"2019-10-21\",\"endDate\":\"2019-06-22\",\"days\":1,\"mustPay\":false,\"memberActCode\":null,\"guests\":0,\"children\":0,\"sourceType\":null,\"roomRateCode\":null,\"timeZone\":\"GMT+8\",\"cityCode\":\"AR00252\",\"couponId\":null,\"excludeSecenery\":false,\"excludeSoldOut\":false,\"rooms\":1,\"canBizBook\":false,\"dayUse\":0,\"yaoKaFlag\":false,\"primeRate\":false,\"primeFree\":false}";
+		requestBody.put("clientInfo",null);
+	    requestBody.put("memberId",0);
+	    requestBody.put("memberType",1);
+	    requestBody.put("channelCode","CA00093");
+	    requestBody.put("bkMemberType",0);
+	    requestBody.put("traceId","sZjq5Kdw-181818144");
+	    requestBody.put("assetReload",false);
+	    requestBody.put("languageCode","0");
+	    requestBody.put("innId","JJ1090");
+	    requestBody.put("beginDate","2020-03-12");
+	    requestBody.put("guests",2);
+	    requestBody.put("children",0);
+	    requestBody.put("days",1);
+	    requestBody.put("mustPay",false);
+	    requestBody.put("brandId","JINJIANG");
+	    requestBody.put("roomTypeId",null);
+	    requestBody.put("endDate","2020-03-13");
+	    requestBody.put("memberActCode",null);
+	    requestBody.put("sourceType",null);
+	    requestBody.put("roomRateCode",null);
+	    requestBody.put("timeZone","GMT+8");
+	    requestBody.put("cityCode","AR04567");
+	    requestBody.put("couponId",null);
+	    requestBody.put("excludeSecenery",false);
+	    requestBody.put("excludeSoldOut",false);
+	    requestBody.put("rooms",1);
+	    requestBody.put("canBizBook",false);
+	    requestBody.put("dayUse",0);
+	    requestBody.put("yaoKaFlag",false);
+	    requestBody.put("primeFree",false);
+	    requestBody.put("addPrice",false);
+	    requestBody.put("busyRoom",0);
 		
-		Map<String, Object> request;
+
+		
 		try {
-			request = new ObjectMapper().readValue(reqStr, HashMap.class);
-			request.put("memberId", "196272484");
 			// TODO add complete request including headers or something other
 			
-			Mono<?>result = pipeline.run(request);
+			Mono<?>result = pipeline.run(null, null);
 			result.block();
-		} catch (JsonProcessingException e) {
+		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
