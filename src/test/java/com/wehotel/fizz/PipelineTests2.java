@@ -27,7 +27,7 @@ class PipelineTests2 {
 		clientInput.put("body", requestBody);
 		
 		// 聚合接口配置
-		File file = new File("/Users/francis/wehotel/workspaces/fizz-gateway/json/aggr-demo.json");
+		File file = new File("json/aggr-demo.json");
 		ConfigLoader loader = new ConfigLoader();
 		Input input = null;
 		Pipeline pipeline = null;

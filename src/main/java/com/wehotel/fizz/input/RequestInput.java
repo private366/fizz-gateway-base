@@ -28,6 +28,7 @@ import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.Option;
 import com.jayway.jsonpath.spi.transformer.TransformationSpec;
 import com.wehotel.fizz.StepResponse;
+import com.wehotel.util.ParamUtil;
 
 import reactor.core.publisher.Mono;
 
@@ -51,17 +52,18 @@ public class RequestInput extends Input {
 	private void doRequestMapping(InputConfig aConfig, InputContext inputContext) {
 		RequestInputConfig config = (RequestInputConfig)aConfig;
 		
-		HttpMethod method = HttpMethod.valueOf(config.getMethod()); 
-		String url = config.getPath()+ (StringUtils.isEmpty(config.getQueryStr())  ? "" : ("?" + config.getQueryParams()));
-			
 		// 把请求信息放入stepContext
 		Map<String,Object> group = new HashMap<>();
 		group.put("request", request);
 		group.put("response", response);
 		this.stepResponse.getRequests().put(name, group);
-		
-		request.put("url", url);
+	
+		HttpMethod method = HttpMethod.valueOf(config.getMethod()); 
 		request.put("method", method);
+		
+		Map<String, Object> params = new HashMap<>();
+		params.putAll(config.getQueryParams());
+		params.putAll(config.getParams());
 		
 		// 数据转换
 		if (inputContext != null && inputContext.getStepContext() != null) {
@@ -74,28 +76,32 @@ public class RequestInput extends Input {
 					// headers
 					if(requestMapping.get("headers") != null) {
 						Map<String, Object> result = PathMapping.transform(stepContext, requestMapping.get("headers"));
+						Map<String, Object> headers = new HashMap<>();
+						headers.putAll(config.getHeaders());
 						if(result != null) {
-							config.getHeaders().putAll(result);
+							headers.putAll(result);
 						}
-						request.put("headers", config.getHeaders());
+						request.put("headers", headers);
 					}
 					
 					// params
 					if(requestMapping.get("params") != null) {
 						Map<String, Object> result = PathMapping.transform(stepContext, requestMapping.get("params"));
 						if(result != null) {
-							config.getParams().putAll(result);
+							params.putAll(result);
 						}
-						request.put("params", config.getParams());
+						request.put("params", params);
 					}
 					
 					// body
 					if(requestMapping.get("body") != null) {
 						Map<String, Object> result = PathMapping.transform(stepContext, requestMapping.get("body"));
+						Map<String, Object> body = new HashMap<>();
+						body.putAll(config.getBody());
 						if(result != null) {
-							config.getBody().putAll(result);
+							body.putAll(result);
 						}
-						request.put("body", config.getBody());
+						request.put("body", body);
 					}
 					
 					// script
@@ -109,6 +115,9 @@ public class RequestInput extends Input {
 				request.put("body", config.getBody());
 			}
 		}
+		
+		String url = config.getBaseUrl() + config.getPath()+ (params.isEmpty() ? "" : ("?" + ParamUtil.toQueryString(params)));
+		request.put("url", url);
 	}
 	
 	private void doResponseMapping(InputConfig aConfig, InputContext inputContext, String responseBody) {
@@ -153,9 +162,9 @@ public class RequestInput extends Input {
 	
 	private Mono<ClientResponse> getClientSpecFromContext(InputConfig aConfig, InputContext inputContext) {
 		RequestInputConfig config = (RequestInputConfig)aConfig;
-		WebClient client = WebClient.create(config.getBaseUrl());
+		WebClient client = WebClient.create();
 		HttpMethod method = HttpMethod.valueOf(config.getMethod()); 
-		String url = config.getPath()+ (StringUtils.isEmpty(config.getQueryStr())  ? "" : ("?" + config.getQueryParams()));
+		String url = (String) request.get("url");
 		WebClient.RequestBodySpec uriSpec = client
 			  .method(method).uri(url);
 		

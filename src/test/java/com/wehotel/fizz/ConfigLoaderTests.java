@@ -19,7 +19,8 @@ class ConfigLoaderTests {
 	}
 	@Test
 	void testCreateInput() {
-		File file = new File("/Users/francis/wehotel/workspaces/fizz-gateway/json/aggr-demo.json");
+		File file = new File("json/aggr-demo.json");
+		
 		
 		ConfigLoader loader = new ConfigLoader();
 		Input input = null;
@@ -36,7 +37,7 @@ class ConfigLoaderTests {
 	
 	@Test
 	void testCreatePipeline() {
-		File file = new File("/Users/francis/wehotel/workspaces/fizz-gateway/json/aggr-demo.json");
+		File file = new File("json/aggr-demo.json");
 		
 		ConfigLoader loader = new ConfigLoader();
 		Pipeline pipeline = null;
