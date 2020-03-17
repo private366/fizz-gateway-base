@@ -10,7 +10,7 @@ import java.util.Map;
  * @author Lancer Hong
  */
 
-public abstract class ScriptUtils {
+public abstract class ScriptUtils { // 4 push
 
     static final String JAVA_SCRIPT = "javascript"; // 不打算支持
 
