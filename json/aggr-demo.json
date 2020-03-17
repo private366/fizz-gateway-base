@@ -28,9 +28,11 @@
                 "request1": {
                     "type": "REQUEST",
                     "config": {
-                        "url": "http://localhost:8080/json?a=cccc&eeee=4444",
+                        "url": "http://localhost:8080/delay?a=cccc&eeee=4444&seconds=1",
                         "method": "GET",
-                        "timeout": 2000,
+                        "connectTimeout": 1,
+                        "readTimeout": 2,
+                        "writeTimeout": 2,
                         "dataMapping": {
                             "request": {
                                 "headers": {
@@ -68,7 +70,6 @@
                     "config": {
                         "url": "http://localhost:8080/json",
                         "method": "GET",
-                        "timeout": 2000,
                         "dataMapping": {
                             "request": {
                                 "headers": {
@@ -119,7 +120,6 @@
                     "config": {
                         "url": "http://localhost:8080/json",
                         "method": "GET",
-                        "timeout": 2000,
                         "dataMapping": {
                             "request": {
                                 "headers": {
@@ -157,7 +157,6 @@
                     "config": {
                         "url": "http://localhost:8080/json",
                         "method": "GET",
-                        "timeout": 2000,
                         "dataMapping": {
                             "request": {
                                 "headers": {

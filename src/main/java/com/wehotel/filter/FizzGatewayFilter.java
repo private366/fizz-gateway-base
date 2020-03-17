@@ -32,7 +32,7 @@ public class FizzGatewayFilter implements WebFilter {
 	public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
 		ServerHttpRequest request =  exchange.getRequest();
 		String path = request.getURI().getPath();
-		if (path.contains("/json")) {
+		if (path.contains("/json") || path.contains("/delay")) {
 			return chain.filter(exchange);
 		}
 		ServerHttpResponse serverHttpResponse =  exchange.getResponse();

@@ -63,7 +63,9 @@ var aggrAPIConfig = {
                     config: {
                         url: "http://baidu.com", // 
                         method: GET, // GET/POST, default GET
-                        timeout: 2000, // ms
+                        connectTimeout: 1, // second
+                        readTimeout: 3, // second
+                        writeTimeout: 3, // second
                         condition: [
                             {
                                 // TODO

@@ -2,9 +2,12 @@ package com.wehotel.fizz.input;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.net.URI;
 import java.nio.charset.Charset;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
@@ -14,12 +17,18 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ReactiveHttpOutputMessage;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.BodyInserter;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
+import org.springframework.web.util.UriComponents;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import com.alibaba.fastjson.JSON;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -28,13 +37,20 @@ import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.Option;
 import com.jayway.jsonpath.spi.transformer.TransformationSpec;
 import com.wehotel.fizz.StepResponse;
-import com.wehotel.util.ParamUtil;
+import com.wehotel.util.MapUtil;
 
+import io.netty.channel.ChannelOption;
+import io.netty.handler.timeout.ReadTimeoutHandler;
+import io.netty.handler.timeout.WriteTimeoutHandler;
 import reactor.core.publisher.Mono;
+import reactor.netty.http.client.HttpClient;
 
 public class RequestInput extends Input {
 	private InputType type;
 	protected Map<String, Object> dataMapping;
+	protected Map<String, Object> request = new HashMap<>();
+	protected Map<String, Object> response = new HashMap<>();
+	
 	public InputType getType() {
 		return type;
 	}
@@ -61,9 +77,9 @@ public class RequestInput extends Input {
 		HttpMethod method = HttpMethod.valueOf(config.getMethod()); 
 		request.put("method", method);
 		
-		Map<String, Object> params = new HashMap<>();
+		MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
 		params.putAll(config.getQueryParams());
-		params.putAll(config.getParams());
+		params.putAll(MapUtil.toMultiValueMap(config.getParams()));
 		
 		// 数据转换
 		if (inputContext != null && inputContext.getStepContext() != null) {
@@ -76,10 +92,10 @@ public class RequestInput extends Input {
 					// headers
 					if(requestMapping.get("headers") != null) {
 						Map<String, Object> result = PathMapping.transform(stepContext, requestMapping.get("headers"));
-						Map<String, Object> headers = new HashMap<>();
-						headers.putAll(config.getHeaders());
+						MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+						headers.putAll(MapUtil.toMultiValueMap(config.getHeaders()));
 						if(result != null) {
-							headers.putAll(result);
+							headers.putAll(MapUtil.toMultiValueMap(result));
 						}
 						request.put("headers", headers);
 					}
@@ -88,7 +104,7 @@ public class RequestInput extends Input {
 					if(requestMapping.get("params") != null) {
 						Map<String, Object> result = PathMapping.transform(stepContext, requestMapping.get("params"));
 						if(result != null) {
-							params.putAll(result);
+							params.putAll(MapUtil.toMultiValueMap(result));
 						}
 						request.put("params", params);
 					}
@@ -116,8 +132,9 @@ public class RequestInput extends Input {
 			}
 		}
 		
-		String url = config.getBaseUrl() + config.getPath()+ (params.isEmpty() ? "" : ("?" + ParamUtil.toQueryString(params)));
-		request.put("url", url);
+		UriComponents uriComponents = UriComponentsBuilder.fromUriString(config.getBaseUrl() + config.getPath())
+				.queryParams(params).build();
+		request.put("url", uriComponents.toUriString());
 	}
 	
 	private void doResponseMapping(InputConfig aConfig, InputContext inputContext, String responseBody) {
@@ -134,9 +151,9 @@ public class RequestInput extends Input {
 					// headers
 					if(responseMapping.get("headers") != null) {
 						Map<String, Object> result = PathMapping.transform(stepContext, responseMapping.get("headers"));
-						Map<String, Object> headers = (Map<String, Object>) response.get("headers");
+						MultiValueMap<String, String> headers = (MultiValueMap<String, String>) response.get("headers");
 						if(result != null) {
-							headers.putAll(result);
+							headers.putAll(MapUtil.toMultiValueMap(result));
 						}
 						response.put("headers", headers);
 					}
@@ -162,43 +179,34 @@ public class RequestInput extends Input {
 	
 	private Mono<ClientResponse> getClientSpecFromContext(InputConfig aConfig, InputContext inputContext) {
 		RequestInputConfig config = (RequestInputConfig)aConfig;
-		WebClient client = WebClient.create();
+		HttpClient httpClient = HttpClient.create()
+				.tcpConfiguration(client -> client
+						.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, config.getConnectTimeout() * 1000)
+						.doOnConnected(conn -> conn.addHandlerLast(new ReadTimeoutHandler(config.getReadTimeout()))
+								.addHandlerLast(new WriteTimeoutHandler(config.getWriteTimeout()))));
+		WebClient client = WebClient.builder().clientConnector(new ReactorClientHttpConnector(httpClient)).build();
+
 		HttpMethod method = HttpMethod.valueOf(config.getMethod()); 
 		String url = (String) request.get("url");
-		WebClient.RequestBodySpec uriSpec = client
-			  .method(method).uri(url);
+		WebClient.RequestBodySpec uriSpec = client.method(method).uri(url);
 		
-		
-//		ScriptEngineManager factory = new ScriptEngineManager();
-//		ScriptEngine engine = factory.getEngineByName("groovy");
-//		engine.put("config", config.getVariables());
-		if (!config.getHeaders().containsKey("Content-Type")) {
-			//defalut content-type
-			uriSpec.header("Content-Type", "application/json; charset=UTF-8");
+		MultiValueMap<String, String> headers = (MultiValueMap<String, String>) request.get("headers");
+		if(headers == null) {
+			headers = new LinkedMultiValueMap<>();
 		}
-		for(String key:config.getHeaders().keySet()) {
-			String value = (String)config.getHeaders().get(key);
-			if (value instanceof String) {
-				String maybeEvalStr = (String)value;
-				if (maybeEvalStr.startsWith("groovy")) {
-//					String script = maybeEvalStr.substring("groovy ".length());
-//					try {
-//						String scriptResult = (String) engine.eval(script);
-//						uriSpec.header(key, value);
-//					} catch (ScriptException e) {
-//						// Todo:do something when failed
-//						e.printStackTrace();
-//					}	
-				} else {
-					uriSpec.header(key, value);		
-				}
-			} else {	
-				uriSpec.header(key, value);
+		if (!headers.containsKey("Content-Type")) {
+			//defalut content-type
+			headers.add("Content-Type", "application/json; charset=UTF-8");
+		}
+		for(Entry<String, List<String>> entry : headers.entrySet()) {
+			if(!CollectionUtils.isEmpty(entry.getValue())) {
+				uriSpec.header(entry.getKey(), entry.getValue().toArray(new String[entry.getValue().size()]));
 			}
 		}
 		
-		BodyInserter<String, ReactiveHttpOutputMessage> body = BodyInserters.fromObject(JSON.toJSONString(config.getBody()));	
-		return  uriSpec.body(body).exchange();
+		BodyInserter<String, ReactiveHttpOutputMessage> body = BodyInserters
+				.fromObject(JSON.toJSONString(config.getBody()));
+		return uriSpec.body(body).exchange();
 	}
 	
 
@@ -212,12 +220,8 @@ public class RequestInput extends Input {
 		this.doRequestMapping(config, inputContext);
 		Mono<ClientResponse> clientResponse = this.getClientSpecFromContext(config, inputContext);
 		return clientResponse.doOnSuccess(cr -> {
-			Map<String, Object> h = new HashMap<>();
 			HttpHeaders httpHeaders = cr.headers().asHttpHeaders();
-			httpHeaders.forEach((k,v)->{
-				h.put(k, httpHeaders.getFirst(k));
-			});
-			this.response.put("headers", h);
+			this.response.put("headers", httpHeaders);
 		}).flatMap(cr -> cr.bodyToMono(String.class)).flatMap(item -> {
 					Map<String, Object> result = new HashMap<String, Object>();
 					result.put("data", item);

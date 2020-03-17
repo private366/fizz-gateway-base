@@ -14,6 +14,10 @@ public class RequestInputConfig extends InputConfig{
 	private Map<String, Object> params = new HashMap<String, Object>();
 	private  Map<String, Object> headers =  new HashMap<String, Object>();
 	private String method ;
+	private int connectTimeout = 1;
+	private int readTimeout = 3;
+	private int writeTimeout = 3;
+	
 	public RequestInputConfig(Map configBody) {
 		String url = (String) configBody.get("url");
 		setUrl(url);
@@ -31,7 +35,15 @@ public class RequestInputConfig extends InputConfig{
 		} else {
 			setMethod("GET");
 		}
-		
+		if (configBody.get("connectTimeout") != null) {
+			connectTimeout = (int)configBody.get("connectTimeout");
+		}
+		if (configBody.get("readTimeout") != null) {
+			readTimeout = (int)configBody.get("readTimeout");
+		}
+		if (configBody.get("writeTimeout") != null) {
+			writeTimeout = (int)configBody.get("writeTimeout");
+		}
 	}
 	
 	public String getQueryStr(){
@@ -101,4 +113,30 @@ public class RequestInputConfig extends InputConfig{
 	public void setMethod(String method) {
 		this.method = method;
 	}
+
+	public int getConnectTimeout() {
+		return connectTimeout;
+	}
+
+	public void setConnectTimeout(int connectTimeout) {
+		this.connectTimeout = connectTimeout;
+	}
+
+	public int getReadTimeout() {
+		return readTimeout;
+	}
+
+	public void setReadTimeout(int readTimeout) {
+		this.readTimeout = readTimeout;
+	}
+
+	public int getWriteTimeout() {
+		return writeTimeout;
+	}
+
+	public void setWriteTimeout(int writeTimeout) {
+		this.writeTimeout = writeTimeout;
+	}
+	
+	
 }
