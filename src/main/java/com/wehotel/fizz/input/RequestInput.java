@@ -1,21 +1,16 @@
 package com.wehotel.fizz.input;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.net.URI;
-import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
 import org.springframework.http.ReactiveHttpOutputMessage;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.util.CollectionUtils;
@@ -26,18 +21,15 @@ import org.springframework.web.reactive.function.BodyInserter;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.alibaba.fastjson.JSON;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jayway.jsonpath.Configuration;
-import com.jayway.jsonpath.Option;
-import com.jayway.jsonpath.spi.transformer.TransformationSpec;
+import com.wehotel.fizz.Pipeline;
 import com.wehotel.fizz.StepResponse;
 import com.wehotel.util.MapUtil;
+import com.wehotel.util.Script;
+import com.wehotel.util.ScriptUtils;
 
 import io.netty.channel.ChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
@@ -46,6 +38,8 @@ import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 
 public class RequestInput extends Input {
+	
+	private static final Logger LOGGER = LoggerFactory.getLogger(RequestInput.class);
 	private InputType type;
 	protected Map<String, Object> dataMapping;
 	protected Map<String, Object> request = new HashMap<>();
@@ -86,12 +80,12 @@ public class RequestInput extends Input {
 			Map<String, Object> stepContext = inputContext.getStepContext();
 			Map<String, Object> dataMapping = this.getConfig().getDataMapping();
 			if (dataMapping != null) {
-				Map<String, Map<String, String>> requestMapping = (Map<String, Map<String, String>>) dataMapping.get("request");
+				Map<String, Object> requestMapping = (Map<String, Object>) dataMapping.get("request");
 				if(requestMapping != null && !StringUtils.isEmpty(requestMapping)) {
 					
 					// headers
 					if(requestMapping.get("headers") != null) {
-						Map<String, Object> result = PathMapping.transform(stepContext, requestMapping.get("headers"));
+						Map<String, Object> result = PathMapping.transform(stepContext, (Map<String, String>) requestMapping.get("headers"));
 						MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
 						headers.putAll(MapUtil.toMultiValueMap(config.getHeaders()));
 						if(result != null) {
@@ -102,7 +96,7 @@ public class RequestInput extends Input {
 					
 					// params
 					if(requestMapping.get("params") != null) {
-						Map<String, Object> result = PathMapping.transform(stepContext, requestMapping.get("params"));
+						Map<String, Object> result = PathMapping.transform(stepContext, (Map<String, String>) requestMapping.get("params"));
 						if(result != null) {
 							params.putAll(MapUtil.toMultiValueMap(result));
 						}
@@ -111,7 +105,7 @@ public class RequestInput extends Input {
 					
 					// body
 					if(requestMapping.get("body") != null) {
-						Map<String, Object> result = PathMapping.transform(stepContext, requestMapping.get("body"));
+						Map<String, Object> result = PathMapping.transform(stepContext, (Map<String, String>) requestMapping.get("body"));
 						Map<String, Object> body = new HashMap<>();
 						body.putAll(config.getBody());
 						if(result != null) {
@@ -122,7 +116,13 @@ public class RequestInput extends Input {
 					
 					// script
 					if(requestMapping.get("script") != null) {
-						// TODO execute script
+						Map<String, Object> scriptCfg = (Map<String, Object>)requestMapping.get("script");
+						try {
+							ScriptHelper.execute(scriptCfg, stepContext);
+						} catch (ScriptException e) {
+							LOGGER.warn("execute script failed, {}", e);
+							throw new RuntimeException("execute script failed");
+						}
 					}
 				}
 			}else {
@@ -145,12 +145,12 @@ public class RequestInput extends Input {
 			Map<String, Object> stepContext = inputContext.getStepContext();
 			Map<String, Object> dataMapping = this.getConfig().getDataMapping();
 			if (dataMapping != null) {
-				Map<String, Map<String, String>> responseMapping = (Map<String, Map<String, String>>) dataMapping.get("response");
+				Map<String, Object> responseMapping = (Map<String, Object>) dataMapping.get("response");
 				if(responseMapping != null && !StringUtils.isEmpty(responseMapping)) {
 					
 					// headers
 					if(responseMapping.get("headers") != null) {
-						Map<String, Object> result = PathMapping.transform(stepContext, responseMapping.get("headers"));
+						Map<String, Object> result = PathMapping.transform(stepContext, (Map<String, String>) responseMapping.get("headers"));
 						MultiValueMap<String, String> headers = (MultiValueMap<String, String>) response.get("headers");
 						if(result != null) {
 							headers.putAll(MapUtil.toMultiValueMap(result));
@@ -160,7 +160,7 @@ public class RequestInput extends Input {
 					
 					// body
 					if(responseMapping.get("body") != null) {
-						Map<String, Object> result = PathMapping.transform(stepContext, responseMapping.get("body"));
+						Map<String, Object> result = PathMapping.transform(stepContext, (Map<String, String>) responseMapping.get("body"));
 						Map<String, Object> body = (Map<String, Object>) response.get("body");
 						if(result != null) {
 							body.putAll(result);
@@ -170,7 +170,13 @@ public class RequestInput extends Input {
 					
 					// script
 					if(responseMapping.get("script") != null) {
-						// TODO
+						Map<String, Object> scriptCfg = (Map<String, Object>) responseMapping.get("script");
+						try {
+							ScriptHelper.execute(scriptCfg, stepContext);
+						} catch (ScriptException e) {
+							LOGGER.warn("execute script failed, {}", e);
+							throw new RuntimeException("execute script failed");
+						}
 					}
 				}
 			}

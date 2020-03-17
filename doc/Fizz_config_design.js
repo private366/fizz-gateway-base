@@ -24,7 +24,10 @@ var aggrAPIConfig = {
             request:{
                 script: { // 校验聚合入参是否合法
                     type: "", // groovy
-                    source: ""
+                    source: "",
+                    variables: { // 环境变量
+                    	
+                    }
                 }
             },
             response:{
@@ -37,7 +40,11 @@ var aggrAPIConfig = {
                 },
                 script: {
                     type: "", // groovy
-                    source: ""
+                    source: "",
+                    variables: { // 环境变量
+                    	
+                    }
+                    
                 }
             }
         }, 
@@ -52,7 +59,10 @@ var aggrAPIConfig = {
                     },
                     script: {
                         type: "", // groovy
-                        source: ""
+                        source: "",
+                        variables: { // 环境变量
+                        	
+                        }
                     }
                 }
             }, 
@@ -84,7 +94,10 @@ var aggrAPIConfig = {
                                 },
                                 script: {
                                     type: "", // groovy
-                                    source: ""
+                                    source: "",
+                                    variables: { // 环境变量
+                                    	
+                                    }
                                 }
                             },
                             response: {
@@ -96,7 +109,10 @@ var aggrAPIConfig = {
                                 },
                                 script: {
                                     //type: "", // groovy
-                                    source: ""
+                                    source: "",
+                                    variables: { // 环境变量
+                                    	
+                                    }
                                 }
                             }
                         }, 

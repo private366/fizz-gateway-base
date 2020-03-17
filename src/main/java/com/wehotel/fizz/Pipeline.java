@@ -4,6 +4,10 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+
+import javax.script.ScriptException;
+
+import org.hibernate.validator.internal.util.privilegedactions.GetClassLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
@@ -14,12 +18,15 @@ import com.wehotel.fizz.input.Input;
 import com.wehotel.fizz.input.InputConfig;
 import com.wehotel.fizz.input.InputContext;
 import com.wehotel.fizz.input.PathMapping;
+import com.wehotel.fizz.input.ScriptHelper;
+import com.wehotel.util.Script;
+import com.wehotel.util.ScriptUtils;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 public class Pipeline {
-	private static final Logger LOGGER = LoggerFactory.getLogger(FizzLogFilter.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(Pipeline.class);
 	private LinkedList<Step> steps = new LinkedList<Step>();
 	private Map<String, Object> stepContext= new HashMap<String, Object>();
 	public void addStep(Step step) {
@@ -95,17 +102,23 @@ public class Pipeline {
 	private StepResponse doStepDataMapping(Step step) {
 		StepResponse stepResponse = (StepResponse)stepContext.get(step.getName());
 		if (step.getDataMapping() != null) {
-			Map<String, Map<String, String>> responseMapping = (Map<String, Map<String, String>>) step.getDataMapping().get("response");
+			Map<String, Object> responseMapping = (Map<String, Object>) step.getDataMapping().get("response");
 			if(responseMapping != null && !StringUtils.isEmpty(responseMapping)) {
 				// body
 				if(responseMapping.get("body") != null) {
-					Map<String, Object> result = PathMapping.transform(stepContext, responseMapping.get("body"));
+					Map<String, Object> result = PathMapping.transform(stepContext, (Map<String, String>) responseMapping.get("body"));
 					stepResponse.setResult(result);
 				}
 				
 				// script
 				if(responseMapping.get("script") != null) {
-					// TODO
+					Map<String, Object> scriptCfg = (Map<String, Object>) responseMapping.get("script");
+					try {
+						ScriptHelper.execute(scriptCfg, stepContext);
+					} catch (ScriptException e) {
+						LOGGER.warn("execute script failed, {}", e);
+						throw new RuntimeException("execute script failed");
+					}
 				}
 			}
 		}
@@ -125,23 +138,29 @@ public class Pipeline {
 		}
 		response = group.get("response");
 		if (input != null && input.getConfig() != null && input.getConfig().getDataMapping() != null) {
-			Map<String, Map<String, String>> responseMapping = (Map<String, Map<String, String>>) input.getConfig().getDataMapping().get("response");
+			Map<String, Object> responseMapping = (Map<String, Object>) input.getConfig().getDataMapping().get("response");
 			if(responseMapping != null && !StringUtils.isEmpty(responseMapping)) {
 				// headers
 				if(responseMapping.get("headers") != null) {
-					Map<String, Object> result = PathMapping.transform(stepContext, responseMapping.get("headers"));
+					Map<String, Object> result = PathMapping.transform(stepContext, (Map<String, String>) responseMapping.get("headers"));
 					response.put("headers", result);
 				}
 				
 				// body
 				if(responseMapping.get("body") != null) {
-					Map<String, Object> result = PathMapping.transform(stepContext, responseMapping.get("body"));
+					Map<String, Object> result = PathMapping.transform(stepContext, (Map<String, String>) responseMapping.get("body"));
 					response.put("body", result);
 				}
 				
 				// script
 				if(responseMapping.get("script") != null) {
-					// TODO
+					Map<String, Object> scriptCfg = (Map<String, Object>) responseMapping.get("script");
+					try {
+						ScriptHelper.execute(scriptCfg, stepContext);
+					} catch (ScriptException e) {
+						LOGGER.warn("execute script failed, {}", e);
+						throw new RuntimeException("execute script failed");
+					}
 				}
 			}
 		}
