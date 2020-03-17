@@ -2,22 +2,33 @@ package com.wehotel.fizz.input;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.net.URI;
 import java.nio.charset.Charset;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ReactiveHttpOutputMessage;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.BodyInserter;
 import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
+import org.springframework.web.util.UriComponents;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import com.alibaba.fastjson.JSON;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -26,90 +37,176 @@ import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.Option;
 import com.jayway.jsonpath.spi.transformer.TransformationSpec;
 import com.wehotel.fizz.StepResponse;
+import com.wehotel.util.MapUtil;
 
+import io.netty.channel.ChannelOption;
+import io.netty.handler.timeout.ReadTimeoutHandler;
+import io.netty.handler.timeout.WriteTimeoutHandler;
 import reactor.core.publisher.Mono;
+import reactor.netty.http.client.HttpClient;
 
 public class RequestInput extends Input {
+	private InputType type;
+	protected Map<String, Object> dataMapping;
+	protected Map<String, Object> request = new HashMap<>();
+	protected Map<String, Object> response = new HashMap<>();
 	
-	private ResponseSpec getClientSpecFromContext(InputConfig aConfig, InputContext inputContext) {
+	public InputType getType() {
+		return type;
+	}
+	public void setType(InputType typeEnum) {
+		this.type = typeEnum;
+	}
+	
+	public Map<String, Object> getDataMapping() {
+		return dataMapping;
+	}
+	public void setDataMapping(Map<String, Object> dataMapping) {
+		this.dataMapping = dataMapping;
+	}
+	
+	private void doRequestMapping(InputConfig aConfig, InputContext inputContext) {
 		RequestInputConfig config = (RequestInputConfig)aConfig;
-		WebClient client = WebClient.create(config.getBaseUrl());
+		
+		// 把请求信息放入stepContext
+		Map<String,Object> group = new HashMap<>();
+		group.put("request", request);
+		group.put("response", response);
+		this.stepResponse.getRequests().put(name, group);
+	
 		HttpMethod method = HttpMethod.valueOf(config.getMethod()); 
-		String url = config.getPath()+ (StringUtils.isEmpty(config.getQueryStr())  ? "" : ("?" + config.getQueryParams()));
-		WebClient.RequestBodySpec uriSpec = client
-			  .method(method).uri(url);
-		String jsonStr = JSON.toJSONString(new Object());
+		request.put("method", method);
+		
+		MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+		params.putAll(config.getQueryParams());
+		params.putAll(MapUtil.toMultiValueMap(config.getParams()));
+		
+		// 数据转换
 		if (inputContext != null && inputContext.getStepContext() != null) {
 			Map<String, Object> stepContext = inputContext.getStepContext();
-			String pathMapping = this.getConfig().getPathMapping();
-			if (pathMapping != null && !StringUtils.isEmpty(pathMapping)) {
-				ObjectMapper mapper = new ObjectMapper();
-				String data;
-				try {
-					data = mapper.writeValueAsString(stepContext);
-					InputStream sourceStream = new ByteArrayInputStream(data.getBytes());
+			Map<String, Object> dataMapping = this.getConfig().getDataMapping();
+			if (dataMapping != null) {
+				Map<String, Map<String, String>> requestMapping = (Map<String, Map<String, String>>) dataMapping.get("request");
+				if(requestMapping != null && !StringUtils.isEmpty(requestMapping)) {
 					
-			         InputStream transformSpec = new ByteArrayInputStream(pathMapping.getBytes());;
-			         TransformationSpec spec;
-			         Object sourceJson;
+					// headers
+					if(requestMapping.get("headers") != null) {
+						Map<String, Object> result = PathMapping.transform(stepContext, requestMapping.get("headers"));
+						MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+						headers.putAll(MapUtil.toMultiValueMap(config.getHeaders()));
+						if(result != null) {
+							headers.putAll(MapUtil.toMultiValueMap(result));
+						}
+						request.put("headers", headers);
+					}
+					
+					// params
+					if(requestMapping.get("params") != null) {
+						Map<String, Object> result = PathMapping.transform(stepContext, requestMapping.get("params"));
+						if(result != null) {
+							params.putAll(MapUtil.toMultiValueMap(result));
+						}
+						request.put("params", params);
+					}
+					
+					// body
+					if(requestMapping.get("body") != null) {
+						Map<String, Object> result = PathMapping.transform(stepContext, requestMapping.get("body"));
+						Map<String, Object> body = new HashMap<>();
+						body.putAll(config.getBody());
+						if(result != null) {
+							body.putAll(result);
+						}
+						request.put("body", body);
+					}
+					
+					// script
+					if(requestMapping.get("script") != null) {
+						// TODO execute script
+					}
+				}
+			}else {
+				request.put("headers", config.getHeaders());
+				request.put("param", config.getParams());
+				request.put("body", config.getBody());
+			}
+		}
+		
+		UriComponents uriComponents = UriComponentsBuilder.fromUriString(config.getBaseUrl() + config.getPath())
+				.queryParams(params).build();
+		request.put("url", uriComponents.toUriString());
+	}
+	
+	private void doResponseMapping(InputConfig aConfig, InputContext inputContext, String responseBody) {
+		RequestInputConfig config = (RequestInputConfig)aConfig;
+		this.response.put("body", JSON.parse(responseBody));	
+		// 数据转换
+		if (inputContext != null && inputContext.getStepContext() != null) {
+			Map<String, Object> stepContext = inputContext.getStepContext();
+			Map<String, Object> dataMapping = this.getConfig().getDataMapping();
+			if (dataMapping != null) {
+				Map<String, Map<String, String>> responseMapping = (Map<String, Map<String, String>>) dataMapping.get("response");
+				if(responseMapping != null && !StringUtils.isEmpty(responseMapping)) {
+					
+					// headers
+					if(responseMapping.get("headers") != null) {
+						Map<String, Object> result = PathMapping.transform(stepContext, responseMapping.get("headers"));
+						MultiValueMap<String, String> headers = (MultiValueMap<String, String>) response.get("headers");
+						if(result != null) {
+							headers.putAll(MapUtil.toMultiValueMap(result));
+						}
+						response.put("headers", headers);
+					}
+					
+					// body
+					if(responseMapping.get("body") != null) {
+						Map<String, Object> result = PathMapping.transform(stepContext, responseMapping.get("body"));
+						Map<String, Object> body = (Map<String, Object>) response.get("body");
+						if(result != null) {
+							body.putAll(result);
+						}
+						response.put("body", body);
+					}
+					
+					// script
+					if(responseMapping.get("script") != null) {
+						// TODO
+					}
+				}
+			}
+		}
+	}
+	
+	private Mono<ClientResponse> getClientSpecFromContext(InputConfig aConfig, InputContext inputContext) {
+		RequestInputConfig config = (RequestInputConfig)aConfig;
+		HttpClient httpClient = HttpClient.create()
+				.tcpConfiguration(client -> client
+						.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, config.getConnectTimeout() * 1000)
+						.doOnConnected(conn -> conn.addHandlerLast(new ReadTimeoutHandler(config.getReadTimeout()))
+								.addHandlerLast(new WriteTimeoutHandler(config.getWriteTimeout()))));
+		WebClient client = WebClient.builder().clientConnector(new ReactorClientHttpConnector(httpClient)).build();
 
-			         //assuming sourceStream, and transformSpec have been initialized
-			         Configuration configuration = Configuration.builder()               
-			        		 .options(Option.CREATE_MISSING_PROPERTIES_ON_DEFINITE_PATH).build();
-			         sourceJson = configuration.jsonProvider().parse(sourceStream,Charset.defaultCharset().name());
-			         spec = configuration.transformationProvider().spec(transformSpec, configuration);
-			         Object transformed = configuration.transformationProvider().transform(sourceJson,spec, configuration);
-			         Map<String, Object> transformedResult = (Map<String, Object>) transformed;
-			         jsonStr = JSON.toJSONString(transformedResult);
-				} catch (JsonProcessingException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
-		}
+		HttpMethod method = HttpMethod.valueOf(config.getMethod()); 
+		String url = (String) request.get("url");
+		WebClient.RequestBodySpec uriSpec = client.method(method).uri(url);
 		
-		ScriptEngineManager factory = new ScriptEngineManager();
-		ScriptEngine engine = factory.getEngineByName("groovy");
-		config.getVariables();
-		engine.put("config", config);
-		if (!config.getHeaders().containsKey("Content-Type")) {
+		MultiValueMap<String, String> headers = (MultiValueMap<String, String>) request.get("headers");
+		if(headers == null) {
+			headers = new LinkedMultiValueMap<>();
+		}
+		if (!headers.containsKey("Content-Type")) {
 			//defalut content-type
-			uriSpec.header("Content-Type", "application/json; charset=UTF-8");
+			headers.add("Content-Type", "application/json; charset=UTF-8");
 		}
-		for(String key:config.getHeaders().keySet()) {
-			String value = (String)config.getHeaders().get(key);
-			if (value instanceof String) {
-				String maybeEvalStr = (String)value;
-				if (maybeEvalStr.startsWith("groovy")) {
-					String script = maybeEvalStr.substring("groovy ".length());
-					try {
-						String scriptResult = (String) engine.eval(script);
-						uriSpec.header(key, value);
-					} catch (ScriptException e) {
-						// Todo:do something when failed
-						e.printStackTrace();
-					}	
-				} else {
-					uriSpec.header(key, value);		
-				}
-			} else {	
-				uriSpec.header(key, value);
+		for(Entry<String, List<String>> entry : headers.entrySet()) {
+			if(!CollectionUtils.isEmpty(entry.getValue())) {
+				uriSpec.header(entry.getKey(), entry.getValue().toArray(new String[entry.getValue().size()]));
 			}
 		}
 		
-		BodyInserter<String, ReactiveHttpOutputMessage> body = BodyInserters.fromObject(jsonStr);
-		
-		// put request info into stepContext
-		request = new HashMap<>();
-		this.stepResponse.getRequests().put(name, request);
-		request.put("url", url);
-		request.put("method", method);
-		request.put("requestBody", JSON.parse(jsonStr));
-		uriSpec.headers(httpHeaders->{
-			request.put("headers", httpHeaders);
-		});
-		
-		return  uriSpec.body(body).retrieve();
+		BodyInserter<String, ReactiveHttpOutputMessage> body = BodyInserters
+				.fromObject(JSON.toJSONString(config.getBody()));
+		return uriSpec.body(body).exchange();
 	}
 	
 
@@ -120,16 +217,21 @@ public class RequestInput extends Input {
 
 
 	public Mono<Map> run() {
-		WebClient.ResponseSpec client = this.getClientSpecFromContext(config, inputContext);
-		return client.bodyToMono(String.class).flatMap(item->{
-			Map<String, Object> result = new HashMap<String, Object>();
-			result.put("data", item);
-			result.put("request", this);
-			
-			this.request.put("responseBody", JSON.parse(item));
-			// TODO: change to Class
-			return Mono.just(result);
-		});
+		this.doRequestMapping(config, inputContext);
+		Mono<ClientResponse> clientResponse = this.getClientSpecFromContext(config, inputContext);
+		return clientResponse.doOnSuccess(cr -> {
+			HttpHeaders httpHeaders = cr.headers().asHttpHeaders();
+			this.response.put("headers", httpHeaders);
+		}).flatMap(cr -> cr.bodyToMono(String.class)).flatMap(item -> {
+					Map<String, Object> result = new HashMap<String, Object>();
+					result.put("data", item);
+					result.put("request", this);
+
+					this.doResponseMapping(config, inputContext, item);
+
+					// TODO: change to Class
+					return Mono.just(result);
+				});
 	}
 
 }

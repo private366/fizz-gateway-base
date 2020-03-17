@@ -6,6 +6,7 @@ import java.util.Map;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.alibaba.fastjson.JSON;
@@ -25,6 +26,22 @@ public class TestController {
 
 	@GetMapping("/json")
 	public Mono<Map<String, Object>> sayJson() {
+		Map<String, Object> map = new HashMap<String, Object>();
+		map.put("user", "ABC");
+		map.put("hello", "world");
+		System.out.println("hello world");
+		return Mono.just(map);
+	}
+	
+
+	@GetMapping("/delay")
+	public Mono<Map<String, Object>> sayJsonWithDelay(@RequestParam(name = "seconds", required = true)Long seconds) {
+		try {
+			Thread.sleep(seconds*1000);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		Map<String, Object> map = new HashMap<String, Object>();
 		map.put("user", "ABC");
 		map.put("hello", "world");

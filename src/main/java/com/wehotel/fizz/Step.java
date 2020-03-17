@@ -25,6 +25,11 @@ public class Step {
 
 	private String name; 
 	
+	// 是否在执行完当前step就返回
+	private boolean stop; 
+	
+	private Map<String, Object> dataMapping;
+	
 	private Map<String, InputConfig> requestConfigs = new HashMap<String, InputConfig>();
 
 	public static class Builder {
@@ -98,6 +103,21 @@ public class Step {
 		this.name = name;
 	}
 
+	public boolean isStop() {
+		return stop;
+	}
+
+	public void setStop(boolean stop) {
+		this.stop = stop;
+	}
+
+	public Map<String, Object> getDataMapping() {
+		return dataMapping;
+	}
+
+	public void setDataMapping(Map<String, Object> dataMapping) {
+		this.dataMapping = dataMapping;
+	}
 
 
 }

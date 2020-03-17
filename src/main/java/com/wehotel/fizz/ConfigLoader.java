@@ -1,0 +1,69 @@
+package com.wehotel.fizz;
+
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.io.FileUtils;
+
+import com.jayway.jsonpath.Configuration;
+import com.jayway.jsonpath.DocumentContext;
+import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.Option;
+import com.wehotel.fizz.input.ClientInputConfig;
+import com.wehotel.fizz.input.Input;
+import com.wehotel.fizz.input.InputType;
+
+
+public class ConfigLoader {
+
+	private DocumentContext parseConfig(File file) throws IOException {
+		if (!file.exists()) {
+			throw new IOException("File not found");
+		}
+		String configStr = FileUtils.readFileToString(file, Charset.forName("UTF-8"));
+		Configuration conf = Configuration.builder()
+				.options(Option.CREATE_MISSING_PROPERTIES_ON_DEFINITE_PATH)
+				.options(Option.DEFAULT_PATH_LEAF_TO_NULL).build();
+		return JsonPath.using(conf).parse(configStr);
+	}
+	
+	public Input createInput(File file) throws IOException {
+		DocumentContext docCtx = this.parseConfig(file);
+		
+		Input input = new Input();
+		input.setName(docCtx.read("$.name"));
+		
+		ClientInputConfig clientInputConfig = new ClientInputConfig();
+		clientInputConfig.setDataMapping(docCtx.read("$.config.dataMapping"));
+		clientInputConfig.setHeaders(docCtx.read("$.config.headers"));
+		clientInputConfig.setMethod(docCtx.read("$.config.method"));
+		clientInputConfig.setPath(docCtx.read("$.config.path"));
+		clientInputConfig.setType(InputType.valueOf(docCtx.read("$.config.type")));
+		input.setConfig(clientInputConfig);
+		return input;
+	}
+	
+	public Pipeline createPipeline(File file) throws IOException {
+		DocumentContext docCtx = this.parseConfig(file);
+		Pipeline pipeline = new Pipeline();
+		
+		List<Map<String, Object>> stepConfigs = docCtx.read("$.config.stepConfigs");
+		for (Map<String, Object> stepConfig : stepConfigs) {
+			Step step = new Step.Builder().read(stepConfig);
+			step.setName((String) stepConfig.get("name"));
+			if(stepConfig.get("stop") != null) {
+				step.setStop((Boolean)stepConfig.get("stop"));
+			}else {
+				step.setStop(false);
+			}
+			step.setDataMapping((Map<String, Object>)stepConfig.get("dataMapping"));
+			pipeline.addStep(step);
+		}
+		
+		return pipeline;
+	}
+}

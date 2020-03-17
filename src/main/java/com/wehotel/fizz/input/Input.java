@@ -1,5 +1,6 @@
 package com.wehotel.fizz.input;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import com.wehotel.fizz.StepResponse;
@@ -11,13 +12,12 @@ public class Input {
 	protected InputConfig config;
 	protected InputContext inputContext;
 	protected StepResponse lastStepResponse = null;
-	protected Map<String, Object> request;
 	protected StepResponse stepResponse;
 	
 	public void setConfig(InputConfig inputConfig) {
 		config = inputConfig;
 	}
-	protected InputConfig getConfig() {
+	public InputConfig getConfig() {
 		return config;
 	}
 
@@ -39,12 +39,7 @@ public class Input {
 		this.name = configName;
 		
 	}
-	public Map<String, Object> getRequest() {
-		return request;
-	}
-	public void setRequest(Map<String, Object> request) {
-		this.request = request;
-	}
+	
 	public StepResponse getStepResponse() {
 		return stepResponse;
 	}
