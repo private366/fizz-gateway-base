@@ -36,11 +36,11 @@ public abstract class ScriptUtils {
         }
     }
 
-    static Object execute(Script script) throws ScriptException {
+    public static Object execute(Script script) throws ScriptException {
         return execute(script, null);
     }
 
-    static Object execute(Script script, Map<String, Object> context) throws ScriptException {
+    public static Object execute(Script script, Map<String, Object> context) throws ScriptException {
         ScriptEngine engine = getScriptEngine(script.getType());
         String src = script.getSource();
         if (context == null) {
