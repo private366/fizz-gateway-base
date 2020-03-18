@@ -45,6 +45,9 @@ public class RequestInput extends Input {
 	protected Map<String, Object> request = new HashMap<>();
 	protected Map<String, Object> response = new HashMap<>();
 	
+	private static final String FALLBACK_MODE_STOP = "stop";
+	private static final String FALLBACK_MODE_CONTINUE = "continue";
+	
 	public InputType getType() {
 		return type;
 	}
@@ -225,19 +228,39 @@ public class RequestInput extends Input {
 	public Mono<Map> run() {
 		this.doRequestMapping(config, inputContext);
 		Mono<ClientResponse> clientResponse = this.getClientSpecFromContext(config, inputContext);
-		return clientResponse.doOnSuccess(cr -> {
+		Mono<String> body = clientResponse.doOnSuccess(cr -> {
 			HttpHeaders httpHeaders = cr.headers().asHttpHeaders();
 			this.response.put("headers", httpHeaders);
-		}).flatMap(cr -> cr.bodyToMono(String.class)).flatMap(item -> {
-					Map<String, Object> result = new HashMap<String, Object>();
-					result.put("data", item);
-					result.put("request", this);
+		}).doOnError(ex->{
+			LOGGER.warn("failed to call {}", request.get("url"), ex);
+		}).flatMap(cr -> cr.bodyToMono(String.class));
 
-					this.doResponseMapping(config, inputContext, item);
-
-					// TODO: change to Class
-					return Mono.just(result);
+		// fallback handler
+		RequestInputConfig reqConfig = (RequestInputConfig) config;
+		if (reqConfig.getFallback() != null) {
+			Map<String, String> fallback = reqConfig.getFallback();
+			String mode = fallback.get("mode");
+			if (FALLBACK_MODE_STOP.equals(mode)) {
+				body = body.onErrorStop();
+			} else if (FALLBACK_MODE_CONTINUE.equals(mode)) {
+				body = body.onErrorResume(ex -> {
+					return Mono.just(fallback.get("defaultResult"));
 				});
+			}else {
+				body = body.onErrorStop();
+			}
+		}
+
+		return body.flatMap(item -> {
+			Map<String, Object> result = new HashMap<String, Object>();
+			result.put("data", item);
+			result.put("request", this);
+
+			this.doResponseMapping(config, inputContext, item);
+
+			// TODO: change to Class
+			return Mono.just(result);
+		});
 	}
 
 }

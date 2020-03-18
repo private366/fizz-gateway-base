@@ -5,6 +5,9 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import reactor.core.publisher.Mono;
 
 import com.wehotel.fizz.input.Input;
@@ -12,6 +15,8 @@ import com.wehotel.fizz.input.Input;
 
 
 class PipelineTests2 {
+	private static final Logger LOGGER = LoggerFactory.getLogger(PipelineTests2.class);
+	
 	@Test
 	void contextLoads() {
 		 
@@ -28,19 +33,23 @@ class PipelineTests2 {
 		
 		// 聚合接口配置
 		File file = new File("json/aggr-demo.json");
-		ConfigLoader loader = new ConfigLoader();
 		Input input = null;
 		Pipeline pipeline = null;
 		try {
-			input = loader.createInput(file);
-			pipeline = loader.createPipeline(file);
+			input = ConfigLoader.createInput(file);
+			pipeline = ConfigLoader.createPipeline(file);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
-		Mono<?>result = pipeline.run(input, clientInput);
-		result.block();
+		Mono<AggregateResult> result = pipeline.run(input, clientInput);
+		result.onErrorResume((ex)->{
+			// TODO handle exception 
+			LOGGER.error("=================ERROR");
+			
+			return Mono.just(new AggregateResult());
+		}).block();
 	}
 	 
 

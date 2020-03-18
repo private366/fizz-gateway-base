@@ -6,6 +6,9 @@
         "path": "/aggr-demo/hotel/rates",
         "dataMapping": {
             "response": {
+           		"headers": {
+                    "traceId": "step1.requests.request1.response.body.hello"
+                },
                 "body": {
                     "aaa": "step1.result",
                     "bbb": "step1.requests.request1.response.body.hello",
@@ -33,6 +36,10 @@
                         "connectTimeout": 1,
                         "readTimeout": 2,
                         "writeTimeout": 2,
+                        "fallbackPlan": {
+                            "mode": "continue",
+                            "fallbackResult": "{\"user\":\"xxxxxxyyyyyyyyyyyyxx\"}"
+                        },
                         "dataMapping": {
                             "request": {
                                 "headers": {
@@ -54,7 +61,7 @@
                                 },
 	                            "script": {
 	                            	"type": "groovy",
-	                            	"source": "import com.wehotel.fizz.business.RsaClientUtil; String authheader = RsaClientUtil.encodeNet(variables.get(\"token\")+\",\"+variables.get(\"appid\")+\",\"+System.currentTimeMillis() ); context.put(\"authheader\",authheader); return authheader;",
+	                            	"source": "",
 	                             	"variables": {
 	                             		"appid": "1140",
 	                             		"token": "859EE0413BC3F88F1F89C162800FB056"

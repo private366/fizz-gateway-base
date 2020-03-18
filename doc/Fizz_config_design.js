@@ -81,6 +81,10 @@ var aggrAPIConfig = {
                                 // TODO
                             }
                         ],
+                        fallback: {
+                            mode: "stop|continue", // 当请求失败时是否继续执行
+                            defaultResult: "" // 当mode=continue时，可设置默认的响应报文(json string)
+                        },
                         dataMapping: { // 数据转换规则
                             request:{
                                 headers: {

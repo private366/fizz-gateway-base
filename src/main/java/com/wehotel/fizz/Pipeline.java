@@ -10,17 +10,14 @@ import javax.script.ScriptException;
 import org.hibernate.validator.internal.util.privilegedactions.GetClassLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 
 import com.alibaba.fastjson.JSON;
-import com.wehotel.filter.FizzLogFilter;
 import com.wehotel.fizz.input.Input;
-import com.wehotel.fizz.input.InputConfig;
-import com.wehotel.fizz.input.InputContext;
 import com.wehotel.fizz.input.PathMapping;
 import com.wehotel.fizz.input.ScriptHelper;
-import com.wehotel.util.Script;
-import com.wehotel.util.ScriptUtils;
+import com.wehotel.util.MapUtil;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -37,12 +34,12 @@ public class Pipeline {
 	    System.out.println("input : " + n);
 	}
 	
-	public Mono<?> run(Input input, Map<String, Object> clientInput) {
+	public Mono<AggregateResult> run(Input input, Map<String, Object> clientInput) {
 		this.initialStepContext(clientInput);
 		LinkedList<Step> opSteps = (LinkedList<Step>) steps.clone();
 		Step step1 = opSteps.removeFirst();
 		step1.beforeRun(stepContext, null);
-		Mono<?> result = createStep(step1).expand(response -> {
+		Mono<List<StepResponse>> result = createStep(step1).expand(response -> {
 			if (opSteps.isEmpty() || response.getStep().isStop()) {
 				return Mono.empty();
 			}
@@ -52,12 +49,12 @@ public class Pipeline {
         }).flatMap(response -> Flux.just(response)).collectList();
 		return result.map(clientResponse -> {
 			// 数据转换
-			Map<String,Object> clientResult = this.doInputDataMapping(input);
-			String jsonString = JSON.toJSONString(clientResult);
+			AggregateResult aggResult = this.doInputDataMapping(input);
+			String jsonString = JSON.toJSONString(aggResult);
 			LOGGER.info("jsonString '{}'", jsonString);
 			LOGGER.info("stepContext '{}'", JSON.toJSONString(stepContext));
 			
-			return clientResult;
+			return aggResult;
 		});
 	}
 
@@ -125,7 +122,8 @@ public class Pipeline {
 		return stepResponse;
 	}
 	
-	private Map<String,Object> doInputDataMapping(Input input) {
+	private AggregateResult doInputDataMapping(Input input) {
+		AggregateResult aggResult = new AggregateResult();
 		Map<String, Map<String,Object>> group = (Map<String, Map<String, Object>>) stepContext.get("input");
 		if(group == null) {
 			group = new HashMap<String, Map<String,Object>>();
@@ -138,22 +136,27 @@ public class Pipeline {
 		}
 		response = group.get("response");
 		if (input != null && input.getConfig() != null && input.getConfig().getDataMapping() != null) {
-			Map<String, Object> responseMapping = (Map<String, Object>) input.getConfig().getDataMapping().get("response");
-			if(responseMapping != null && !StringUtils.isEmpty(responseMapping)) {
+			Map<String, Object> responseMapping = (Map<String, Object>) input.getConfig().getDataMapping()
+					.get("response");
+			if (responseMapping != null && !StringUtils.isEmpty(responseMapping)) {
 				// headers
-				if(responseMapping.get("headers") != null) {
-					Map<String, Object> result = PathMapping.transform(stepContext, (Map<String, String>) responseMapping.get("headers"));
-					response.put("headers", result);
+				if (responseMapping.get("headers") != null) {
+					Map<String, Object> result = PathMapping.transform(stepContext,
+							(Map<String, String>) responseMapping.get("headers"));
+					if(result != null) {
+						response.put("headers", MapUtil.toMultiValueMap(result));
+					}
 				}
-				
+
 				// body
-				if(responseMapping.get("body") != null) {
-					Map<String, Object> result = PathMapping.transform(stepContext, (Map<String, String>) responseMapping.get("body"));
+				if (responseMapping.get("body") != null) {
+					Map<String, Object> result = PathMapping.transform(stepContext,
+							(Map<String, String>) responseMapping.get("body"));
 					response.put("body", result);
 				}
-				
+
 				// script
-				if(responseMapping.get("script") != null) {
+				if (responseMapping.get("script") != null) {
 					Map<String, Object> scriptCfg = (Map<String, Object>) responseMapping.get("script");
 					try {
 						ScriptHelper.execute(scriptCfg, stepContext);
@@ -164,6 +167,9 @@ public class Pipeline {
 				}
 			}
 		}
-		return response;
+		
+		aggResult.setBody((Map<String, Object>) response.get("body"));
+		aggResult.setHeaders((MultiValueMap<String, String>) response.get("headers"));
+		return aggResult;
 	}
 }

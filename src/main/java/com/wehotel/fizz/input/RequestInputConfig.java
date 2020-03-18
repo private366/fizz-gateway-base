@@ -17,6 +17,7 @@ public class RequestInputConfig extends InputConfig{
 	private int connectTimeout = 1;
 	private int readTimeout = 3;
 	private int writeTimeout = 3;
+	private Map<String,String> fallback = new HashMap<String, String>();
 	
 	public RequestInputConfig(Map configBody) {
 		String url = (String) configBody.get("url");
@@ -44,6 +45,10 @@ public class RequestInputConfig extends InputConfig{
 		if (configBody.get("writeTimeout") != null) {
 			writeTimeout = (int)configBody.get("writeTimeout");
 		}
+		if (configBody.get("fallback") != null) {
+			fallback = (Map<String,String>)configBody.get("fallback");
+		}
+		
 	}
 	
 	public String getQueryStr(){
@@ -136,6 +141,14 @@ public class RequestInputConfig extends InputConfig{
 
 	public void setWriteTimeout(int writeTimeout) {
 		this.writeTimeout = writeTimeout;
+	}
+
+	public Map<String, String> getFallback() {
+		return fallback;
+	}
+
+	public void setFallback(Map<String, String> fallback) {
+		this.fallback = fallback;
 	}
 	
 	

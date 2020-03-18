@@ -14,6 +14,10 @@ public class ScriptHelper {
 		Script script = new Script();
 		script.setType((String) scriptCfg.get("type"));
 		script.setSource((String) scriptCfg.get("source"));
+		if(script.getSource() == null || script.getSource() == "") {
+			return null;
+		}
+		
 		Map<String, Object> variables = (Map<String, Object>) scriptCfg.get("variables");
 		Map<String, Object> ctx = new HashMap<>();
 		ctx.put("variables", variables);
