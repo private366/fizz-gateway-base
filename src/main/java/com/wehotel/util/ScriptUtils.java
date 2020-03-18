@@ -9,7 +9,7 @@ import javax.script.*;
 import java.util.Map;
 
 /**
- * @author Lancer Hong 
+ * @author Lancer Hong
  */
 
 public abstract class ScriptUtils {
