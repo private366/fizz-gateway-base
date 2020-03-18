@@ -1,5 +1,6 @@
 package com.wehotel.util;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.junit.jupiter.api.Test;
 
 import javax.script.ScriptException;
@@ -13,9 +14,9 @@ import java.util.Map;
 
 public class ScriptUtilsTests {
 
-    // ScriptUtils 应用的例子
+    // 执行groovy脚本的例子
     @Test
-    void test() {
+    void test4groovyScript() {
         Script script = new Script();
         script.setSource(
                 "import com.wehotel.util.DateTimeUtils; " +
@@ -36,5 +37,34 @@ public class ScriptUtilsTests {
         } catch (ScriptException e) {
             e.printStackTrace();
         }
+    }
+
+    // 执行javascript脚本的例子，并有限制说明
+    @Test
+    void test4javaScript() throws JsonProcessingException, ScriptException {
+        Script script = new Script();
+        script.setType(ScriptUtils.JAVA_SCRIPT);
+        script.setSource(
+                // 脚本必须是一个函数，
+                // 函数名固定为dyFunc，
+                // 函数只有一个参数paramsJsonStr，它是一个json字符串，通过这样完成java数据及类型，到javascript的传递，例如下面的context，
+                // 函数必须有返回值，值为javascript的Object类型，含resJsonStr属性，它代表需要传递给java代码的结果的json字符串形式，clazz属性代表resJsonStr对应的java类型
+                "function dyFunc(paramsJsonStr) {" +
+                "    if (paramsJsonStr) {" +
+                "        var person = JSON.parse(paramsJsonStr)['person'];" +
+                "        person['age'] = 24;" +
+                "        person['sex'] = 'male';" +
+                "        var resJsonStr = JSON.stringify(person);" +
+                "        return {'clazz':'com.wehotel.util.Person','resJsonStr':resJsonStr};" +
+                "    } " +
+                "}"
+        );
+        Person person = new Person();
+        person.setName("lancer");
+        person.setAge(23);
+        Map<String, Object> context = new HashMap<>();
+        context.put("person", person);
+        Person obj = (Person) ScriptUtils.execute(script, context);
+        System.err.println(obj.getName() + ':' + obj.getAge());
     }
 }

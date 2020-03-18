@@ -1,9 +1,11 @@
 package com.wehotel.util;
 
-import javax.script.Bindings;
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jdk.nashorn.api.scripting.ScriptObjectMirror;
+import org.apache.commons.lang3.StringUtils;
+
+import javax.script.*;
 import java.util.Map;
 
 /**
@@ -12,13 +14,19 @@ import java.util.Map;
 
 public abstract class ScriptUtils {
 
-    static final String JAVA_SCRIPT = "javascript"; // 不打算支持
+    static final String JAVA_SCRIPT = "javascript";
 
     static final String GROOVY = "groovy";
 
     private static ScriptEngine groovyEngine;
 
     private static ScriptEngine javascriptEngine;
+
+    private static final String jsFuncName = "dyFunc";
+
+    private static final String clazz = "clazz";
+
+    private static final String resJsonStr = "resJsonStr";
 
     static {
         ScriptEngineManager engineManger = new ScriptEngineManager();
@@ -41,14 +49,32 @@ public abstract class ScriptUtils {
     }
 
     public static Object execute(Script script, Map<String, Object> context) throws ScriptException {
-        ScriptEngine engine = getScriptEngine(script.getType());
+        String type = script.getType();
+        ScriptEngine engine = getScriptEngine(type);
         String src = script.getSource();
-        if (context == null) {
-            return engine.eval(src);
-        } else {
-            Bindings bis = engine.createBindings();
-            bis.putAll(context);
-            return engine.eval(src, bis);
+        if (GROOVY.equals(type)) {
+            if (context == null) {
+                return engine.eval(src);
+            } else {
+                Bindings bis = engine.createBindings();
+                bis.putAll(context);
+                return engine.eval(src, bis);
+            }
+        } else { // js
+            engine.eval(src);
+            Invocable invocable = (Invocable) engine;
+            String paramsJsonStr = StringUtils.EMPTY;
+            try {
+                ObjectMapper mapper = JacksonUtils.getObjectMapper();
+                if (context != null) {
+                    paramsJsonStr = mapper.writeValueAsString(context);
+                }
+                ScriptObjectMirror som = (ScriptObjectMirror) invocable.invokeFunction(jsFuncName, paramsJsonStr);
+                Class<?> clz = Class.forName(som.get(clazz).toString());
+                return mapper.readValue(som.get(resJsonStr).toString(), clz);
+            } catch (JsonProcessingException | NoSuchMethodException | ClassNotFoundException e) {
+                throw new ScriptException(e);
+            }
         }
     }
 }
