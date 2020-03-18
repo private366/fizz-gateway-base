@@ -17,7 +17,8 @@ public class RequestInputConfig extends InputConfig{
 	private int connectTimeout = 1;
 	private int readTimeout = 3;
 	private int writeTimeout = 3;
-	
+	private Map<String, Object> condition;
+
 	public RequestInputConfig(Map configBody) {
 		String url = (String) configBody.get("url");
 		setUrl(url);
@@ -43,6 +44,9 @@ public class RequestInputConfig extends InputConfig{
 		}
 		if (configBody.get("writeTimeout") != null) {
 			writeTimeout = (int)configBody.get("writeTimeout");
+		}
+		if (configBody.get("condition") != null) {
+			setCondition((Map)configBody.get("condition"));
 		}
 	}
 	
@@ -137,6 +141,12 @@ public class RequestInputConfig extends InputConfig{
 	public void setWriteTimeout(int writeTimeout) {
 		this.writeTimeout = writeTimeout;
 	}
-	
-	
+
+	public Map<String, Object> getCondition() {
+		return condition;
+	}
+
+	public void setCondition(Map<String, Object> condition) {
+		this.condition = condition;
+	}
 }

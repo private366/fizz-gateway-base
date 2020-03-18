@@ -72,15 +72,18 @@ var aggrAPIConfig = {
                     type: "REQUEST", // 类型，REQUEST/MYSQL
                     config: {
                         url: "http://baidu.com", // 
-                        method: GET, // GET/POST, default GET
+                        method: "GET", // GET/POST, default GET
                         connectTimeout: 1, // second
                         readTimeout: 3, // second
                         writeTimeout: 3, // second
-                        condition: [
-                            {
-                                // TODO
+                        condition: {
+                            type: "", // groovy
+                            source: "return \"ABC\".equals(variables.get(\"param1\")) && variables.get(\"param2\") >= 10;", // 脚本执行结果返回TRUE执行该接口调用，FALSE不执行
+                            variables: { // 环境变量
+                                "param1": "input step1.requests.request2.response.body.user", // value前缀"input "开头，参数值从StepContext获取
+                                "param2": 10 // 常量
                             }
-                        ],
+                        },
                         dataMapping: { // 数据转换规则
                             request:{
                                 headers: {

@@ -9,7 +9,8 @@
                 "body": {
                     "aaa": "step1.result",
                     "bbb": "step1.requests.request1.response.body.hello",
-                    "ccc": "step2.requests.request3.response.body.hello"
+                    "ccc": "step2.requests.request3.response.body.hello",
+                    "step2_request2_response": "step2.requests.request2.response.body"
                 }
             }
         },
@@ -165,6 +166,14 @@
                     "config": {
                         "url": "http://localhost:8080/json",
                         "method": "GET",
+                        "condition": {
+                            "type": "groovy",
+                            "source": "return \"ABC\".equals(variables.get(\"param1\")) && variables.get(\"param2\") >= 10;",
+                            "variables": {
+                                "param1": "input step1.requests.request2.response.body.user",
+                                "param2": 10
+                            }
+                        },
                         "dataMapping": {
                             "request": {
                                 "headers": {
