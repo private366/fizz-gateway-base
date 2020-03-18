@@ -71,8 +71,10 @@ public class Step {
 		List<Mono> monos = new ArrayList<Mono>();  
 		for(String name :inputs.keySet()) {
 			Input input = inputs.get(name);
-			Mono<Map>singleMono = input.run(); 
-			monos.add(singleMono);
+			if (input.needRun(stepContext)) {
+				Mono<Map> singleMono = input.run();
+				monos.add(singleMono);
+			}
 		}
 		return monos;	
 	}

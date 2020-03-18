@@ -32,6 +32,15 @@ public class Input {
 		return name;
 	}
 
+	/**
+	 * 检查该Input是否需要运行，默认都运行
+	 * @stepContext Step上下文
+	 * @return TRUE：运行
+	 */
+	public boolean needRun(Map<String, Object> stepContext) {
+		return Boolean.TRUE;
+	}
+
 	public Mono<Map> run() {
 		return null;
 	}
