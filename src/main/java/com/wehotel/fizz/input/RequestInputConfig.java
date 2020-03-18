@@ -17,6 +17,7 @@ public class RequestInputConfig extends InputConfig{
 	private int connectTimeout = 1;
 	private int readTimeout = 3;
 	private int writeTimeout = 3;
+	private Map<String,String> fallback = new HashMap<String, String>();
 	private Map<String, Object> condition;
 
 	public RequestInputConfig(Map configBody) {
@@ -44,6 +45,9 @@ public class RequestInputConfig extends InputConfig{
 		}
 		if (configBody.get("writeTimeout") != null) {
 			writeTimeout = (int)configBody.get("writeTimeout");
+		}
+		if (configBody.get("fallback") != null) {
+			fallback = (Map<String,String>)configBody.get("fallback");
 		}
 		if (configBody.get("condition") != null) {
 			setCondition((Map)configBody.get("condition"));
@@ -142,6 +146,14 @@ public class RequestInputConfig extends InputConfig{
 		this.writeTimeout = writeTimeout;
 	}
 
+	public Map<String, String> getFallback() {
+		return fallback;
+	}
+
+	public void setFallback(Map<String, String> fallback) {
+		this.fallback = fallback;
+	}
+	
 	public Map<String, Object> getCondition() {
 		return condition;
 	}

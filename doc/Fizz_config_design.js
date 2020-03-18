@@ -83,6 +83,10 @@ var aggrAPIConfig = {
                                 "param1": "input step1.requests.request2.response.body.user", // value前缀"input "开头，参数值从StepContext获取
                                 "param2": 10 // 常量
                             }
+                        ],
+                        fallback: {
+                            mode: "stop|continue", // 当请求失败时是否继续执行
+                            defaultResult: "" // 当mode=continue时，可设置默认的响应报文(json string)
                         },
                         dataMapping: { // 数据转换规则
                             request:{
