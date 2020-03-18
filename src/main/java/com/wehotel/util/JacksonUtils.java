@@ -18,7 +18,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
 /**
- * @author Lancer Hong
+ * @author Lancer Hong 
  */
 
 public abstract class JacksonUtils {
