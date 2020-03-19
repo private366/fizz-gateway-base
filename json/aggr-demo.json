@@ -4,6 +4,18 @@
         "type": "REQUEST",
         "method": "POST",
         "path": "/aggr-demo/hotel/rates",
+        "requestBodySchema": {
+            "type":"object",
+            "properties":{
+                "userId":{
+                    "type":"string",
+                    "title":"用户名",
+                    "description":"描述"
+                }
+            },
+            "required": ["userId"]
+        },
+
         "dataMapping": {
             "response": {
            		"headers": {

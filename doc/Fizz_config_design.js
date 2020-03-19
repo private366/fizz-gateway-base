@@ -8,18 +8,17 @@ var aggrAPIConfig = {
         headers: {
             "a": "b"
         },
-        fields:[ // 定义聚合接口参数
-            {
-                field: "userId",
-                name: "用户名",
-                desc: "描述",
-                type: "string",
-                required: true,
-                validates: [
-                    // TODO
-                ]
-            }
-        ],
+        requestBodySchema: { // 定义聚合接口参数,使用JSON Schema规范，详见：http://json-schema.org/specification.html
+            type:"object",
+            properties:{
+                userId:{
+                    type:"string",
+                    title:"用户名",
+                    description:"描述"
+                }
+            },
+            required: ["userId"]
+        },
         dataMapping: {// 聚合接口数据转换规则
             request:{
                 script: { // 校验聚合入参是否合法
@@ -82,8 +81,7 @@ var aggrAPIConfig = {
                             variables: { // 环境变量
                                 "param1": "input step1.requests.request2.response.body.user", // value前缀"input "开头，参数值从StepContext获取
                                 "param2": 10 // 常量
-                            }
-                        ],
+                         },
                         fallback: {
                             mode: "stop|continue", // 当请求失败时是否继续执行
                             defaultResult: "" // 当mode=continue时，可设置默认的响应报文(json string)
@@ -134,6 +132,7 @@ var aggrAPIConfig = {
                         }
                     }
                 }
+            }
             }
         }]
     }
