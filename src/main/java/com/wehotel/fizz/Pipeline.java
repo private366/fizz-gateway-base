@@ -10,6 +10,7 @@ import javax.script.ScriptException;
 import org.hibernate.validator.internal.util.privilegedactions.GetClassLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 
@@ -51,8 +52,8 @@ public class Pipeline {
 			// 数据转换
 			AggregateResult aggResult = this.doInputDataMapping(input);
 			String jsonString = JSON.toJSONString(aggResult);
-			LOGGER.info("jsonString '{}'", jsonString);
-			LOGGER.info("stepContext '{}'", JSON.toJSONString(stepContext));
+			LOGGER.info("jsonString {}", jsonString);
+			LOGGER.info("stepContext {}", JSON.toJSONString(stepContext));
 			
 			return aggResult;
 		});
@@ -91,7 +92,6 @@ public class Pipeline {
 			inputRequest.put("params", clientInput.get("params"));
 			inputRequest.put("body", clientInput.get("body"));
 		}
-		
 		stepContext.put("input", input);
 	}
 
@@ -102,10 +102,24 @@ public class Pipeline {
 			Map<String, Object> responseMapping = (Map<String, Object>) step.getDataMapping().get("response");
 			if(responseMapping != null && !StringUtils.isEmpty(responseMapping)) {
 				// body
-				if(responseMapping.get("body") != null) {
-					Map<String, Object> result = PathMapping.transform(stepContext, (Map<String, String>) responseMapping.get("body"));
-					stepResponse.setResult(result);
+				Map<String, Object> body = new HashMap<>();
+				if(responseMapping.get("fixedBody") != null) {
+					body.putAll((Map<String, Object>)responseMapping.get("fixedBody"));
 				}
+				if (responseMapping.get("body") != null) {
+					Map<String, Object> result = PathMapping.transform(stepContext,
+							(Map<String, Object>) responseMapping.get("body"));
+					if (result != null) {
+						body.putAll(result);
+					}
+					Map<String, Object> scriptRules = PathMapping
+							.getScriptRules((Map<String, Object>) responseMapping.get("body"));
+					Map<String, Object> scriptResult = ScriptHelper.executeScripts(scriptRules, stepContext);
+					if (scriptResult != null && !scriptResult.isEmpty()) {
+						body.putAll(scriptResult);
+					}
+				}
+				stepResponse.setResult(body);
 				
 				// script
 				if(responseMapping.get("script") != null) {
@@ -140,20 +154,44 @@ public class Pipeline {
 					.get("response");
 			if (responseMapping != null && !StringUtils.isEmpty(responseMapping)) {
 				// headers
+				Map<String, Object> headers = new HashMap<>();
+				if(responseMapping.get("fixedHeaders") != null) {
+					headers.putAll((Map<String, Object>)responseMapping.get("fixedHeaders"));
+				}
 				if (responseMapping.get("headers") != null) {
 					Map<String, Object> result = PathMapping.transform(stepContext,
-							(Map<String, String>) responseMapping.get("headers"));
-					if(result != null) {
-						response.put("headers", MapUtil.toMultiValueMap(result));
+							(Map<String, Object>) responseMapping.get("headers"));
+					if (result != null) {
+						headers.putAll(result);
+					}
+					Map<String, Object> scriptRules = PathMapping
+							.getScriptRules((Map<String, Object>) responseMapping.get("headers"));
+					Map<String, Object> scriptResult = ScriptHelper.executeScripts(scriptRules, stepContext);
+					if (scriptResult != null && !scriptResult.isEmpty()) {
+						headers.putAll(scriptResult);
 					}
 				}
+				response.put("headers", headers);
 
 				// body
+				Map<String, Object> body = new HashMap<>();
+				if (responseMapping.get("fixedBody") != null) {
+					body.putAll((Map<String, Object>) responseMapping.get("fixedBody"));
+				}
 				if (responseMapping.get("body") != null) {
 					Map<String, Object> result = PathMapping.transform(stepContext,
-							(Map<String, String>) responseMapping.get("body"));
-					response.put("body", result);
+							(Map<String, Object>) responseMapping.get("body"));
+					if (result != null) {
+						body.putAll(result);
+					}
+					Map<String, Object> scriptRules = PathMapping
+							.getScriptRules((Map<String, Object>) responseMapping.get("body"));
+					Map<String, Object> scriptResult = ScriptHelper.executeScripts(scriptRules, stepContext);
+					if (scriptResult != null && !scriptResult.isEmpty()) {
+						body.putAll(scriptResult);
+					}
 				}
+				response.put("body", body);
 
 				// script
 				if (responseMapping.get("script") != null) {
@@ -169,7 +207,7 @@ public class Pipeline {
 		}
 		
 		aggResult.setBody((Map<String, Object>) response.get("body"));
-		aggResult.setHeaders((MultiValueMap<String, String>) response.get("headers"));
+		aggResult.setHeaders(MapUtil.toMultiValueMap((Map<String, Object>) response.get("headers")));
 		return aggResult;
 	}
 }

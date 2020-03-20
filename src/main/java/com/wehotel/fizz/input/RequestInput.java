@@ -37,6 +37,7 @@ import io.netty.handler.timeout.WriteTimeoutHandler;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 
+@SuppressWarnings("unchecked")
 public class RequestInput extends Input {
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(RequestInput.class);
@@ -74,9 +75,9 @@ public class RequestInput extends Input {
 		HttpMethod method = HttpMethod.valueOf(config.getMethod()); 
 		request.put("method", method);
 		
-		MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-		params.putAll(config.getQueryParams());
-		params.putAll(MapUtil.toMultiValueMap(config.getParams()));
+		Map<String, Object> params = new HashMap<>();
+		params.putAll(MapUtil.toHashMap(config.getQueryParams()));		
+		request.put("params", params);
 		
 		// 数据转换
 		if (inputContext != null && inputContext.getStepContext() != null) {
@@ -85,37 +86,58 @@ public class RequestInput extends Input {
 			if (dataMapping != null) {
 				Map<String, Object> requestMapping = (Map<String, Object>) dataMapping.get("request");
 				if(requestMapping != null && !StringUtils.isEmpty(requestMapping)) {
-					
 					// headers
-					if(requestMapping.get("headers") != null) {
-						Map<String, Object> result = PathMapping.transform(stepContext, (Map<String, String>) requestMapping.get("headers"));
-						MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
-						headers.putAll(MapUtil.toMultiValueMap(config.getHeaders()));
-						if(result != null) {
-							headers.putAll(MapUtil.toMultiValueMap(result));
-						}
-						request.put("headers", headers);
+					Map<String, Object> headers = new HashMap<>();
+					if(requestMapping.get("fixedHeaders") != null) {
+						headers.putAll((Map<String, Object>)requestMapping.get("fixedHeaders"));
 					}
+					if(requestMapping.get("headers") != null) {
+						Map<String, Object> result = PathMapping.transform(stepContext, (Map<String, Object>) requestMapping.get("headers"));
+						if(result != null) {
+							headers.putAll(result);
+						}
+						Map<String, Object> scriptRules = PathMapping.getScriptRules((Map<String, Object>) requestMapping.get("headers"));
+						Map<String, Object> scriptResult = ScriptHelper.executeScripts(scriptRules, stepContext);
+						if(scriptResult != null && !scriptResult.isEmpty()) {
+							headers.putAll(scriptResult);
+						}
+					}
+					request.put("headers", headers);
 					
 					// params
-					if(requestMapping.get("params") != null) {
-						Map<String, Object> result = PathMapping.transform(stepContext, (Map<String, String>) requestMapping.get("params"));
-						if(result != null) {
-							params.putAll(MapUtil.toMultiValueMap(result));
-						}
-						request.put("params", params);
+					if(requestMapping.get("fixedParams") != null) {
+						params.putAll((Map<String, Object>)requestMapping.get("fixedParams"));
 					}
+					if(requestMapping.get("params") != null) {
+						Map<String, Object> result = PathMapping.transform(stepContext, (Map<String, Object>) requestMapping.get("params"));
+						if(result != null) {
+							params.putAll(result);
+						}
+						Map<String, Object> scriptRules = PathMapping.getScriptRules((Map<String, Object>) requestMapping.get("params"));
+						Map<String, Object> scriptResult = ScriptHelper.executeScripts(scriptRules, stepContext);
+						if(scriptResult != null && !scriptResult.isEmpty()) {
+							params.putAll(scriptResult);
+						}
+					}
+					request.put("params", params);
 					
 					// body
+					Map<String, Object> body = new HashMap<>();
+					if(requestMapping.get("fixedBody") != null) {
+						body.putAll((Map<String, Object>)requestMapping.get("fixedBody"));
+					}
 					if(requestMapping.get("body") != null) {
-						Map<String, Object> result = PathMapping.transform(stepContext, (Map<String, String>) requestMapping.get("body"));
-						Map<String, Object> body = new HashMap<>();
-						body.putAll(config.getBody());
+						Map<String, Object> result = PathMapping.transform(stepContext, (Map<String, Object>) requestMapping.get("body"));
 						if(result != null) {
 							body.putAll(result);
 						}
-						request.put("body", body);
+						Map<String, Object> scriptRules = PathMapping.getScriptRules((Map<String, Object>) requestMapping.get("body"));
+						Map<String, Object> scriptResult = ScriptHelper.executeScripts(scriptRules, stepContext);
+						if(scriptResult != null && !scriptResult.isEmpty()) {
+							body.putAll(scriptResult);
+						}
 					}
+					request.put("body", body);
 					
 					// script
 					if(requestMapping.get("script") != null) {
@@ -128,15 +150,11 @@ public class RequestInput extends Input {
 						}
 					}
 				}
-			}else {
-				request.put("headers", config.getHeaders());
-				request.put("param", config.getParams());
-				request.put("body", config.getBody());
 			}
 		}
 		
 		UriComponents uriComponents = UriComponentsBuilder.fromUriString(config.getBaseUrl() + config.getPath())
-				.queryParams(params).build();
+				.queryParams(MapUtil.toMultiValueMap(params)).build();
 		request.put("url", uriComponents.toUriString());
 	}
 	
@@ -150,26 +168,41 @@ public class RequestInput extends Input {
 			if (dataMapping != null) {
 				Map<String, Object> responseMapping = (Map<String, Object>) dataMapping.get("response");
 				if(responseMapping != null && !StringUtils.isEmpty(responseMapping)) {
-					
 					// headers
-					if(responseMapping.get("headers") != null) {
-						Map<String, Object> result = PathMapping.transform(stepContext, (Map<String, String>) responseMapping.get("headers"));
-						MultiValueMap<String, String> headers = (MultiValueMap<String, String>) response.get("headers");
-						if(result != null) {
-							headers.putAll(MapUtil.toMultiValueMap(result));
-						}
-						response.put("headers", headers);
+					Map<String, Object> headers = (Map<String, Object>) response.get("headers");
+					if(responseMapping.get("fixedHeaders") != null) {
+						headers.putAll((Map<String, Object>)responseMapping.get("fixedHeaders"));
 					}
+					if(responseMapping.get("headers") != null) {
+						Map<String, Object> result = PathMapping.transform(stepContext, (Map<String, Object>) responseMapping.get("headers"));
+						if(result != null) {
+							headers.putAll(result);
+						}
+						Map<String, Object> scriptRules = PathMapping.getScriptRules((Map<String, Object>) responseMapping.get("headers"));
+						Map<String, Object> scriptResult = ScriptHelper.executeScripts(scriptRules, stepContext);
+						if(scriptResult != null && !scriptResult.isEmpty()) {
+							headers.putAll(scriptResult);
+						}
+					}
+					response.put("headers", headers);
 					
 					// body
+					Map<String, Object> body = (Map<String, Object>) response.get("body");
+					if(responseMapping.get("fixedBody") != null) {
+						body.putAll((Map<String, Object>)responseMapping.get("fixedBody"));
+					}
 					if(responseMapping.get("body") != null) {
-						Map<String, Object> result = PathMapping.transform(stepContext, (Map<String, String>) responseMapping.get("body"));
-						Map<String, Object> body = (Map<String, Object>) response.get("body");
+						Map<String, Object> result = PathMapping.transform(stepContext, (Map<String, Object>) responseMapping.get("body"));
 						if(result != null) {
 							body.putAll(result);
 						}
-						response.put("body", body);
+						Map<String, Object> scriptRules = PathMapping.getScriptRules((Map<String, Object>) responseMapping.get("body"));
+						Map<String, Object> scriptResult = ScriptHelper.executeScripts(scriptRules, stepContext);
+						if(scriptResult != null && !scriptResult.isEmpty()) {
+							body.putAll(scriptResult);
+						}
 					}
+					response.put("body", body);
 					
 					// script
 					if(responseMapping.get("script") != null) {
@@ -199,22 +232,32 @@ public class RequestInput extends Input {
 		String url = (String) request.get("url");
 		WebClient.RequestBodySpec uriSpec = client.method(method).uri(url);
 		
-		MultiValueMap<String, String> headers = (MultiValueMap<String, String>) request.get("headers");
+		Map<String, Object> headers = (Map<String, Object>) request.get("headers");
 		if(headers == null) {
-			headers = new LinkedMultiValueMap<>();
+			headers = new HashMap<>();
 		}
 		if (!headers.containsKey("Content-Type")) {
 			//defalut content-type
-			headers.add("Content-Type", "application/json; charset=UTF-8");
+			headers.put("Content-Type", "application/json; charset=UTF-8");
 		}
-		for(Entry<String, List<String>> entry : headers.entrySet()) {
-			if(!CollectionUtils.isEmpty(entry.getValue())) {
-				uriSpec.header(entry.getKey(), entry.getValue().toArray(new String[entry.getValue().size()]));
+		
+		for(Entry<String, Object> entry : headers.entrySet()) {
+			if (entry.getValue() != null) {
+				if(entry.getValue() instanceof List) {
+					List<Object> list = (List<Object>) entry.getValue();
+					if(list.size() > 0) {
+						uriSpec.header(entry.getKey(), list.toArray(new String[list.size()]));
+					}
+				}else if(entry.getValue() instanceof String) {
+					uriSpec.header(entry.getKey(), (String) entry.getValue());
+				}else {
+					uriSpec.header(entry.getKey(), entry.getValue().toString());
+				}
 			}
 		}
 		
 		BodyInserter<String, ReactiveHttpOutputMessage> body = BodyInserters
-				.fromObject(JSON.toJSONString(config.getBody()));
+				.fromObject(JSON.toJSONString(request.get("body")));
 		return uriSpec.body(body).exchange();
 	}
 	
@@ -244,7 +287,7 @@ public class RequestInput extends Input {
 		Map<String, Object> variables = (Map<String, Object>) condition.get("variables");
 		if (!CollectionUtils.isEmpty(variables)) {
 			Map<String, Object> transformedVariables = new HashMap<>(variables.size());
-			Map<String, String> rules = new HashMap<>(variables.size());
+			Map<String, Object> rules = new HashMap<>(variables.size());
 			for (Entry<String, Object> entry : variables.entrySet()) {
 				String key = entry.getKey();
 				Object value = entry.getValue();
@@ -283,7 +326,15 @@ public class RequestInput extends Input {
 		Mono<ClientResponse> clientResponse = this.getClientSpecFromContext(config, inputContext);
 		Mono<String> body = clientResponse.doOnSuccess(cr -> {
 			HttpHeaders httpHeaders = cr.headers().asHttpHeaders();
-			this.response.put("headers", httpHeaders);
+			Map<String, Object> headers = new HashMap<>();
+			httpHeaders.forEach((key,value)->{
+				if(value.size() > 1) {
+					headers.put(key, value);
+				}else {
+					headers.put(key, httpHeaders.getFirst(key));
+				}
+			});
+			this.response.put("headers", headers);
 		}).doOnError(ex->{
 			LOGGER.warn("failed to call {}", request.get("url"), ex);
 		}).flatMap(cr -> cr.bodyToMono(String.class));

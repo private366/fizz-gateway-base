@@ -13,7 +13,9 @@ public class ClientInputConfig extends InputConfig {
 	private String path;
 	private String method;
 	private Map<String, Object> headers = new HashMap<String, Object>();
+	private Map<String, Object> requestBodySchema;
 
+	@SuppressWarnings("unchecked")
 	public ClientInputConfig(Map configBody) {
 		this.path = (String) configBody.get("path");
 		if (configBody.get("headers") != null) {
@@ -25,6 +27,9 @@ public class ClientInputConfig extends InputConfig {
 			setMethod("GET");
 		}
 
+		if (configBody.get("requestBodySchema") != null) {
+			requestBodySchema = ((Map) configBody.get("requestBodySchema"));
+		}
 	}
 	
 	public ClientInputConfig() {
@@ -53,5 +58,13 @@ public class ClientInputConfig extends InputConfig {
 
 	public void setMethod(String method) {
 		this.method = method;
+	}
+
+	public Map<String, Object> getRequestBodySchema() {
+		return requestBodySchema;
+	}
+
+	public void setRequestBodySchema(Map<String, Object> requestBodySchema) {
+		this.requestBodySchema = requestBodySchema;
 	}
 }

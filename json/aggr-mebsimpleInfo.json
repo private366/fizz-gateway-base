@@ -1,0 +1,219 @@
+{
+    "name": "aggr-mebSimpleInfo",
+    "config": {
+        "type": "REQUEST",
+        "method": "POST",
+        "path": "/aggr-member/mebSimpleInfo",
+        "dataMapping": {
+            "response": {
+           		"headers": {
+                    "traceId": "abcdfdfdf"
+                },
+                "body": {
+                    "memberType": "step1.requests.request1.response.body.mebLevel",
+                    "point": "step1.requests.request3.response.body.total",
+                    "primePoint": "step1.requests.request4.response.body.total",
+                    "a.b.endTime": "step1.requests.request1.response.body.levelEnd",
+                    "identityAuthentication": {
+                        "type": "groovy",
+                        "source": "import com.wehotel.util.MapUtil; return MapUtil.get(context,\"step1.requests.request1.response.body.authenticationIdCard\")&&MapUtil.get(context,\"step1.requests.request1.response.body.authenticationMobile\")&&MapUtil.get(context,\"step1.requests.request1.response.body.authenticationName\")",
+                         "variables": {}
+                    },
+                    "showPrimeLabel": {
+                        "type": "groovy",
+                        "source": "import com.wehotel.util.MapUtil; String list =  MapUtil.get(context,\"step1.requests.request2.response.body.msg\"); return list;",
+                         "variables": {}
+                    }
+                },
+                "script": {
+                    "type":"groovy",
+                    "source": "",
+                    "variables":{
+
+                    }
+                }
+            }
+        },
+        "stepConfigs": [{
+            "name": "step1",
+            "stop": false,
+            "dataMapping": {
+                "response": {
+                    "body": {}
+                }
+            },
+            "requests": {
+                "request1": {
+                    "type": "REQUEST",
+                    "config": {
+                        "url": "http://172.25.33.79/we-meb/rest/we-meb/api/getMebInfo",
+                        "method": "POST",
+                        "connectTimeout": 1,
+                        "readTimeout": 2,
+                        "writeTimeout": 2,
+                        "fallbackPlan": {
+                            "mode": "stop",
+                            "fallbackResult": "{}"
+                        },
+                        "dataMapping": {
+                            "request": {
+		                        "fixedHeaders": {
+		                           "apigwkey":"0667048182d1c6a9b3c60d39720b9719"
+		                        },
+		                        "fixedParams": {},
+		                        "fixedBody": {},
+                                "headers": {
+                                    "X-AUTH-HEADER": {
+                                        "type": "groovy",
+                                        "source": "import com.wehotel.business.RsaClientUtil; return RsaClientUtil.encodeNet(variables.get(\"token\")+\",\"+variables.get(\"appid\")+\",\"+System.currentTimeMillis() ); ",
+                                         "variables": {
+                                             "appid": "1132",
+                                             "token": "26BF5E9029AF2B47A7F1EC2A82348C9A"
+                                        }
+                                    }
+                                },
+                                "body": {
+                                    "mebId": "int input.request.headers.mid"
+                                },
+                                "params": {},
+	                            "script": {}
+                            },
+                            "response": {
+                                "headers": {},
+                                "body": {}
+                            }
+                        }
+                    }
+                },
+                "request2": {
+                    "type": "REQUEST",
+                    "config": {
+                        "url": "http://172.25.63.88:8080/we-label/rest/we-label/api/getLabel",
+                        "method": "POST",
+                        "connectTimeout": 1,
+                        "readTimeout": 2,
+                        "writeTimeout": 2,
+                        "fallbackPlan": {
+                            "mode": "continue",
+                            "fallbackResult": "{}"
+                        },
+                        "dataMapping": {
+                            "request": {
+		                        "fixedHeaders": {
+		                           "apigwkey":"0667048182d1c6a9b3c60d39720b9719"
+		                        },
+		                        "fixedParams": {},
+		                        "fixedBody": {
+                                    "labelType": 704
+                                },
+                                "headers": {
+                                    "X-AUTH-HEADER": {
+                                        "type": "groovy",
+                                        "source": "import com.wehotel.business.RsaClientUtil; return RsaClientUtil.encodeNet(variables.get(\"token\")+\",\"+variables.get(\"appid\")+\",\"+System.currentTimeMillis() ); ",
+                                         "variables": {
+                                             "appid": "1132",
+                                             "token": "26BF5E9029AF2B47A7F1EC2A82348C9A"
+                                        }
+                                    }
+                                },
+                                "body": {
+                                    "mebId": "int input.request.headers.mid"
+                                },
+                                "params": {},
+	                            "script": {}
+                            },
+                            "response": {
+                                "headers": {},
+                                "body": {}
+                            }
+                        }
+                    }
+                },
+                "request3": {
+                    "type": "REQUEST",
+                    "config": {
+                        "url": "http://172.25.33.79/we-point/rest/we-point/api/getMebBalance",
+                        "method": "POST",
+                        "connectTimeout": 1,
+                        "readTimeout": 2,
+                        "writeTimeout": 2,
+                        "fallbackPlan": {
+                            "mode": "continue",
+                            "fallbackResult": "{}"
+                        },
+                        "dataMapping": {
+                            "request": {
+		                        "fixedHeaders": {
+		                           "apigwkey":"0667048182d1c6a9b3c60d39720b9719"
+		                        },
+		                        "fixedParams": {},
+		                        "fixedBody": {},
+                                "headers": {
+                                    "X-AUTH-HEADER": {
+                                        "type": "groovy",
+                                        "source": "import com.wehotel.business.RsaClientUtil; return RsaClientUtil.encodeNet(variables.get(\"token\")+\",\"+variables.get(\"appid\")+\",\"+System.currentTimeMillis() ); ",
+                                         "variables": {
+                                             "appid": "1132",
+                                             "token": "26BF5E9029AF2B47A7F1EC2A82348C9A"
+                                        }
+                                    }
+                                },
+                                "body": {
+                                    "mebId": "int input.request.headers.mid"
+                                },
+                                "params": {},
+	                            "script": {}
+                            },
+                            "response": {
+                                "headers": {},
+                                "body": {}
+                            }
+                        }
+                    }
+                },
+                "request4": {
+                    "type": "REQUEST",
+                    "config": {
+                        "url": "http://172.25.63.102:8094/prime-point/rest/zxpoint/getMebBalance",
+                        "method": "POST",
+                        "connectTimeout": 1,
+                        "readTimeout": 2,
+                        "writeTimeout": 2,
+                        "fallbackPlan": {
+                            "mode": "continue",
+                            "fallbackResult": "{}"
+                        },
+                        "dataMapping": {
+                            "request": {
+		                        "fixedHeaders": {
+		                           "apigwkey":"0667048182d1c6a9b3c60d39720b9719"
+		                        },
+		                        "fixedParams": {},
+		                        "fixedBody": {},
+                                "headers": {
+                                    "X-AUTH-HEADER": {
+                                        "type": "groovy",
+                                        "source": "import com.wehotel.business.RsaClientUtil; return RsaClientUtil.encodeNet(variables.get(\"token\")+\",\"+variables.get(\"appid\")+\",\"+System.currentTimeMillis() ); ",
+                                         "variables": {
+                                             "appid": "1132",
+                                             "token": "26BF5E9029AF2B47A7F1EC2A82348C9A"
+                                        }
+                                    }
+                                },
+                                "body": {
+                                    "mebId": "int input.request.headers.mid"
+                                },
+                                "params": {},
+	                            "script": {}
+                            },
+                            "response": {
+                                "headers": {},
+                                "body": {}
+                            }
+                        }
+                    }
+                }
+            }
+        }]
+    }
+}

@@ -43,6 +43,7 @@ public class ConfigLoader {
 		clientInputConfig.setMethod(docCtx.read("$.config.method"));
 		clientInputConfig.setPath(docCtx.read("$.config.path"));
 		clientInputConfig.setType(InputType.valueOf(docCtx.read("$.config.type")));
+		clientInputConfig.setRequestBodySchema(docCtx.read("$.config.requestBodySchema"));
 		input.setConfig(clientInputConfig);
 		return input;
 	}

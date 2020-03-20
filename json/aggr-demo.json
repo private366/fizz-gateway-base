@@ -4,6 +4,18 @@
         "type": "REQUEST",
         "method": "POST",
         "path": "/aggr-demo/hotel/rates",
+        "requestBodySchema": {
+            "type":"object",
+            "properties":{
+                "userId":{
+                    "type":"string",
+                    "title":"用户名",
+                    "description":"描述"
+                }
+            },
+            "required": ["userId"]
+        },
+
         "dataMapping": {
             "response": {
            		"headers": {
@@ -43,6 +55,15 @@
                         },
                         "dataMapping": {
                             "request": {
+		                        "fixedHeaders": {
+		                            "a": "b"
+		                        },
+		                        "fixedParams": {
+		                            "a": "b"
+		                        },
+		                        "fixedBody": {
+		
+		                        },
                                 "headers": {
                                     "abc": "step1.requests.request1.headers.xyz"
                                 },
@@ -69,15 +90,6 @@
 									}
 	                            }
                             }
-                        },
-                        "headers": {
-                            "a": "b"
-                        },
-                        "params": {
-                            "a": "b"
-                        },
-                        "body": {
-
                         }
                     }
                 },
@@ -88,6 +100,15 @@
                         "method": "GET",
                         "dataMapping": {
                             "request": {
+                            	"fixedHeaders": {
+		                            "a": "b"
+		                        },
+		                        "fixedParams": {
+		                            "a": "b"
+		                        },
+		                        "fixedBody": {
+		
+		                        },
                                 "headers": {
                                     "abc": "step1.requests.request1.headers.xyz"
                                 },
@@ -106,15 +127,6 @@
                                     "inn.innId": "step1.requests.request1.response.id"
                                 }
                             }
-                        },
-                        "headers": {
-                            "a": "b"
-                        },
-                        "params": {
-                            "a": "b"
-                        },
-                        "body": {
-
                         }
                     }
                 }
@@ -138,6 +150,15 @@
                         "method": "GET",
                         "dataMapping": {
                             "request": {
+                            	"fixedHeaders": {
+		                            "a": "b"
+		                        },
+		                        "fixedParams": {
+		                            "a": "b"
+		                        },
+		                        "fixedBody": {
+		
+		                        },
                                 "headers": {
                                     "abc": "step1.requests.request1.headers.xyz"
                                 },
@@ -156,15 +177,6 @@
                                     "inn.innId": "step1.requests.request1.response.id"
                                 }
                             }
-                        },
-                        "headers": {
-                            "a": "b"
-                        },
-                        "params": {
-                            "a": "b"
-                        },
-                        "body": {
-
                         }
                     }
                 },
@@ -183,6 +195,15 @@
                         },
                         "dataMapping": {
                             "request": {
+                            	"fixedHeaders": {
+		                            "a": "b"
+		                        },
+		                        "fixedParams": {
+		                            "a": "b"
+		                        },
+		                        "fixedBody": {
+		
+		                        },
                                 "headers": {
                                     "abc": "step1.requests.request1.headers.xyz"
                                 },
@@ -201,15 +222,6 @@
                                     "inn.innId": "step1.requests.request1.response.id"
                                 }
                             }
-                        },
-                        "headers": {
-                            "a": "b"
-                        },
-                        "params": {
-                            "a": "b"
-                        },
-                        "body": {
-
                         }
                     }
                 }

@@ -5,9 +5,9 @@ var aggrAPIConfig = {
         type: "REQUEST", // 类型，REQUEST/MYSQL
         method: "GET/POST",
         path: "/aggr-hotel/hotel/rates", // 格式：分组名+路径， 分组名以aggr-开头，表示聚合接口
-        headers: {
+        headers: { // 
             "a": "b"
-        },
+        }, 
         fields:[ // 定义聚合接口参数
             {
                 field: "userId",
@@ -20,6 +20,17 @@ var aggrAPIConfig = {
                 ]
             }
         ],
+        requestBodySchema: { // 定义聚合接口参数,使用JSON Schema规范，详见：http://json-schema.org/specification.html
+            type:"object",
+            properties:{
+                userId:{
+                    type:"string",
+                    title:"用户名",
+                    description:"描述"
+                }
+            },
+            required: ["userId"]
+        },
         dataMapping: {// 聚合接口数据转换规则
             request:{
                 script: { // 校验聚合入参是否合法
@@ -31,10 +42,16 @@ var aggrAPIConfig = {
                 }
             },
             response:{
-                headers: {
+            	fixedBody: { // 固定的body
+            		"a":"b"
+                },
+                fixedHeaders: {// 固定header
+                	"a":"b"
+                },
+            	headers: { // 引用的header
                     "abc": "step1.requests.request1.headers.xyz"
                 },
-                body: {
+                body: { // 引用的header
                     "abc": "step1.requests.request1.response.id",
                     "inn.innName": "step1.requests.request2.response.hotelName"
                 },
@@ -47,12 +64,15 @@ var aggrAPIConfig = {
                     
                 }
             }
-        }, 
+        },
         stepConfigs: [{ // step的配置
             name: "step1", // 步骤名称
             stop: false, // 是否在执行完当前step就返回
             dataMapping: {// step response数据转换规则
                 response: { 
+                	fixedBody: { // 固定的body
+                    	"a":"b"
+                    },
                     body: { // step result
                         "abc": "step1.requests.request1.response.id",
                         "inn.innName": "step1.requests.request2.response.hotelName"
@@ -82,19 +102,27 @@ var aggrAPIConfig = {
                             variables: { // 环境变量
                                 "param1": "input step1.requests.request2.response.body.user", // value前缀"input "开头，参数值从StepContext获取
                                 "param2": 10 // 常量
-                            }
-                        ],
+                         },
                         fallback: {
                             mode: "stop|continue", // 当请求失败时是否继续执行
                             defaultResult: "" // 当mode=continue时，可设置默认的响应报文(json string)
                         },
                         dataMapping: { // 数据转换规则
                             request:{
+                            	fixedBody: {
+                                	
+                                },
+                                fixedHeaders: {
+                                	
+                                },
+                                fixedParams: {
+                                	
+                                },
                                 headers: {
                                     "abc": "step1.requests.request1.headers.xyz"
                                 },
                                 body:{
-                                    "inn.innId": "step1.requests.request1.response.id"
+                                    "inn.innId": "step1.requests.request1.response.id" // 默认为源数据类型，如果要转换类型则以目标类型+空格开头，如："int "
                                 },
                                 params:{
                                     "userId": "input.requestBody.userId"
@@ -108,6 +136,12 @@ var aggrAPIConfig = {
                                 }
                             },
                             response: {
+                            	fixedBody: {
+                                	
+                                },
+                                fixedHeaders: {
+                                	
+                                },
                                 headers: {
                                     "abc": "step1.requests.request1.headers.xyz"
                                 },
@@ -122,18 +156,10 @@ var aggrAPIConfig = {
                                     }
                                 }
                             }
-                        }, 
-                        headers: {
-                            "a": "b"
-                        },
-                        params: {
-                            "a": "b"
-                        },
-                        body: {
-
                         }
                     }
                 }
+            }
             }
         }]
     }
