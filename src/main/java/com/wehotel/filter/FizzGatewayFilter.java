@@ -15,11 +15,13 @@ import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.wehotel.fizz.AggregateResource;
 import com.wehotel.fizz.AggregateResult;
 import com.wehotel.fizz.ConfigLoader;
 import com.wehotel.fizz.Pipeline;
 import com.wehotel.fizz.input.Input;
+import com.wehotel.util.MapUtil;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -47,8 +49,8 @@ public class FizzGatewayFilter implements WebFilter {
 		Map<String, Object> clientInput = new HashMap<>();
 		clientInput.put("url", path);
 		clientInput.put("method", method);
-		clientInput.put("headers", request.getHeaders());
-		clientInput.put("params", request.getQueryParams());
+		clientInput.put("headers", MapUtil.toHashMap(request.getHeaders()));
+		clientInput.put("params", MapUtil.toHashMap(request.getQueryParams()));
 
 		long len = request.getHeaders().getContentLength();
 		Mono<AggregateResult> result = null;

@@ -10,9 +10,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 public class RequestInputConfig extends InputConfig{
 	private URL url ;
-	private Map<String, Object> body = new HashMap<String, Object>();
-	private Map<String, Object> params = new HashMap<String, Object>();
-	private  Map<String, Object> headers =  new HashMap<String, Object>();
 	private String method ;
 	private int connectTimeout = 1;
 	private int readTimeout = 3;
@@ -23,15 +20,6 @@ public class RequestInputConfig extends InputConfig{
 	public RequestInputConfig(Map configBody) {
 		String url = (String) configBody.get("url");
 		setUrl(url);
-		if (configBody.get("body") != null) {
-			setBody((Map)configBody.get("body"));	
-		}
-		if (configBody.get("params") != null) {
-			setParams((Map)configBody.get("params"));	
-		}
-		if (configBody.get("headers") != null) {
-			setHeaders((Map)configBody.get("headers"));
-		}
 		if (configBody.get("method") != null) {
 			setMethod((String)configBody.get("method"));
 		} else {
@@ -81,33 +69,6 @@ public class RequestInputConfig extends InputConfig{
 			e.printStackTrace();
 		}
 		
-	}
-
-
-	public Map<String, Object> getParams() {
-		return params;
-	}
-
-	public void setParams(Map<String, Object> params) {
-		this.params = params;
-	}
-
-	public Map<String, Object> getBody() {
-		return body;
-	}
-
-	public void setBody(Map<String, Object> body) {
-		this.body = body;
-	}
-
-	public Map<String, Object> getHeaders() {
-		return headers;
-	}
-
-
-
-	public void setHeaders(Map<String, Object> headers) {
-		this.headers = headers;
 	}
 
 

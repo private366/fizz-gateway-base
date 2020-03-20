@@ -5,9 +5,9 @@ var aggrAPIConfig = {
         type: "REQUEST", // 类型，REQUEST/MYSQL
         method: "GET/POST",
         path: "/aggr-hotel/hotel/rates", // 格式：分组名+路径， 分组名以aggr-开头，表示聚合接口
-        headers: {
+        headers: { // 
             "a": "b"
-        },
+        }, 
         fields:[ // 定义聚合接口参数
             {
                 field: "userId",
@@ -31,10 +31,16 @@ var aggrAPIConfig = {
                 }
             },
             response:{
-                headers: {
+            	fixedBody: { // 固定的body
+            		"a":"b"
+                },
+                fixedHeaders: {// 固定header
+                	"a":"b"
+                },
+            	headers: { // 引用的header
                     "abc": "step1.requests.request1.headers.xyz"
                 },
-                body: {
+                body: { // 引用的header
                     "abc": "step1.requests.request1.response.id",
                     "inn.innName": "step1.requests.request2.response.hotelName"
                 },
@@ -47,12 +53,15 @@ var aggrAPIConfig = {
                     
                 }
             }
-        }, 
+        },
         stepConfigs: [{ // step的配置
             name: "step1", // 步骤名称
             stop: false, // 是否在执行完当前step就返回
             dataMapping: {// step response数据转换规则
                 response: { 
+                	fixedBody: { // 固定的body
+                    	"a":"b"
+                    },
                     body: { // step result
                         "abc": "step1.requests.request1.response.id",
                         "inn.innName": "step1.requests.request2.response.hotelName"
@@ -90,11 +99,20 @@ var aggrAPIConfig = {
                         },
                         dataMapping: { // 数据转换规则
                             request:{
+                            	fixedBody: {
+                                	
+                                },
+                                fixedHeaders: {
+                                	
+                                },
+                                fixedParams: {
+                                	
+                                },
                                 headers: {
                                     "abc": "step1.requests.request1.headers.xyz"
                                 },
                                 body:{
-                                    "inn.innId": "step1.requests.request1.response.id"
+                                    "inn.innId": "step1.requests.request1.response.id" // 默认为源数据类型，如果要转换类型则以目标类型+空格开头，如："int "
                                 },
                                 params:{
                                     "userId": "input.requestBody.userId"
@@ -108,6 +126,12 @@ var aggrAPIConfig = {
                                 }
                             },
                             response: {
+                            	fixedBody: {
+                                	
+                                },
+                                fixedHeaders: {
+                                	
+                                },
                                 headers: {
                                     "abc": "step1.requests.request1.headers.xyz"
                                 },
@@ -122,15 +146,6 @@ var aggrAPIConfig = {
                                     }
                                 }
                             }
-                        }, 
-                        headers: {
-                            "a": "b"
-                        },
-                        params: {
-                            "a": "b"
-                        },
-                        body: {
-
                         }
                     }
                 }

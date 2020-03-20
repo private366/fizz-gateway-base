@@ -43,6 +43,15 @@
                         },
                         "dataMapping": {
                             "request": {
+		                        "fixedHeaders": {
+		                            "a": "b"
+		                        },
+		                        "fixedParams": {
+		                            "a": "b"
+		                        },
+		                        "fixedBody": {
+		
+		                        },
                                 "headers": {
                                     "abc": "step1.requests.request1.headers.xyz"
                                 },
@@ -69,15 +78,6 @@
 									}
 	                            }
                             }
-                        },
-                        "headers": {
-                            "a": "b"
-                        },
-                        "params": {
-                            "a": "b"
-                        },
-                        "body": {
-
                         }
                     }
                 },
@@ -88,6 +88,15 @@
                         "method": "GET",
                         "dataMapping": {
                             "request": {
+                            	"fixedHeaders": {
+		                            "a": "b"
+		                        },
+		                        "fixedParams": {
+		                            "a": "b"
+		                        },
+		                        "fixedBody": {
+		
+		                        },
                                 "headers": {
                                     "abc": "step1.requests.request1.headers.xyz"
                                 },
@@ -106,15 +115,6 @@
                                     "inn.innId": "step1.requests.request1.response.id"
                                 }
                             }
-                        },
-                        "headers": {
-                            "a": "b"
-                        },
-                        "params": {
-                            "a": "b"
-                        },
-                        "body": {
-
                         }
                     }
                 }
@@ -138,6 +138,15 @@
                         "method": "GET",
                         "dataMapping": {
                             "request": {
+                            	"fixedHeaders": {
+		                            "a": "b"
+		                        },
+		                        "fixedParams": {
+		                            "a": "b"
+		                        },
+		                        "fixedBody": {
+		
+		                        },
                                 "headers": {
                                     "abc": "step1.requests.request1.headers.xyz"
                                 },
@@ -156,15 +165,6 @@
                                     "inn.innId": "step1.requests.request1.response.id"
                                 }
                             }
-                        },
-                        "headers": {
-                            "a": "b"
-                        },
-                        "params": {
-                            "a": "b"
-                        },
-                        "body": {
-
                         }
                     }
                 },
@@ -183,6 +183,15 @@
                         },
                         "dataMapping": {
                             "request": {
+                            	"fixedHeaders": {
+		                            "a": "b"
+		                        },
+		                        "fixedParams": {
+		                            "a": "b"
+		                        },
+		                        "fixedBody": {
+		
+		                        },
                                 "headers": {
                                     "abc": "step1.requests.request1.headers.xyz"
                                 },
@@ -201,15 +210,6 @@
                                     "inn.innId": "step1.requests.request1.response.id"
                                 }
                             }
-                        },
-                        "headers": {
-                            "a": "b"
-                        },
-                        "params": {
-                            "a": "b"
-                        },
-                        "body": {
-
                         }
                     }
                 }
