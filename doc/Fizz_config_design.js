@@ -7,6 +7,7 @@ var aggrAPIConfig = {
         path: "/aggr-hotel/hotel/rates", // 格式：分组名+路径， 分组名以aggr-开头，表示聚合接口
         headers: { // 
             "a": "b"
+<<<<<<< HEAD
         }, 
         fields:[ // 定义聚合接口参数
             {
@@ -20,6 +21,20 @@ var aggrAPIConfig = {
                 ]
             }
         ],
+=======
+        },
+        requestBodySchema: { // 定义聚合接口参数,使用JSON Schema规范，详见：http://json-schema.org/specification.html
+            type:"object",
+            properties:{
+                userId:{
+                    type:"string",
+                    title:"用户名",
+                    description:"描述"
+                }
+            },
+            required: ["userId"]
+        },
+>>>>>>> 53c1e0624575fb885a2fba590124bd0e505346cd
         dataMapping: {// 聚合接口数据转换规则
             request:{
                 script: { // 校验聚合入参是否合法
@@ -91,8 +106,7 @@ var aggrAPIConfig = {
                             variables: { // 环境变量
                                 "param1": "input step1.requests.request2.response.body.user", // value前缀"input "开头，参数值从StepContext获取
                                 "param2": 10 // 常量
-                            }
-                        ],
+                         },
                         fallback: {
                             mode: "stop|continue", // 当请求失败时是否继续执行
                             defaultResult: "" // 当mode=continue时，可设置默认的响应报文(json string)
@@ -149,6 +163,7 @@ var aggrAPIConfig = {
                         }
                     }
                 }
+            }
             }
         }]
     }
