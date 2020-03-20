@@ -54,15 +54,15 @@ public class RouteFilter implements WebFilter {
                     log.info("client req body: " + bodyStr);
 
                     // TODO improve and use reactor http client instead webclient
-                    HttpClient httpClient = HttpClient.create()
+                    HttpClient hc = HttpClient.create()
                             .tcpConfiguration(client -> client
                                     .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10 * 1000)
                                     .doOnConnected(conn -> conn.addHandlerLast(new ReadTimeoutHandler(10))
                                             .addHandlerLast(new WriteTimeoutHandler(10))));
-                    WebClient webClient = WebClient.builder().clientConnector(new ReactorClientHttpConnector(httpClient)).build();
+                    WebClient wc = WebClient.builder().clientConnector(new ReactorClientHttpConnector(hc)).build();
 
                     String remoteUrl = "http://172.25.63.186:9999/inn/suggest"; // TODO
-                    WebClient.RequestBodySpec remoteReq = webClient.method(clientReq.getMethod()).uri(remoteUrl);
+                    WebClient.RequestBodySpec remoteReq = wc.method(clientReq.getMethod()).uri(remoteUrl);
 
                     clientReq.getHeaders().entrySet().forEach(entry -> {
                         List<String> hvs = entry.getValue();
