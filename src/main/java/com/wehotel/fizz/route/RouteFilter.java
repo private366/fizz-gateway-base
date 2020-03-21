@@ -1,5 +1,6 @@
 package com.wehotel.fizz.route;
 
+import com.wehotel.util.Constants;
 import io.netty.channel.ChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;
@@ -8,6 +9,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpResponse;
@@ -21,15 +24,17 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 
+import javax.annotation.Resource;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * @author Lancer Hong
  */
 /*
-use:
-curl -X POST -H 'Content-type:application/json;charset=UTF-8' -d '{ "cityCode":"AR00252", "keyword":"", "loLat":23.080194, "loLng":113.293113, "distance":10, "languageCode":"1" }' http://127.0.0.1:8080/service0/api0
+use like:
+curl -X POST -H 'Content-type:application/json;charset=UTF-8' -d '{ "cityCode":"AR00252", "keyword":"", "loLat":23.080194, "loLng":113.293113, "distance":10, "languageCode":"1" }' http://127.0.0.1:8080/fizz/service0/api0
 to test
  */
 // 基于 filter 实现？
@@ -42,18 +47,33 @@ public class RouteFilter implements WebFilter {
 
     private boolean inSomeCase = false; // TODO
 
+    @Resource
+    private ServiceConfigHolder serviceConfigHolder;
+
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
 
         ServerHttpRequest clientReq = exchange.getRequest();
-        Flux<DataBuffer> clientReqBody = clientReq.getBody();
+        ServerHttpResponse clientResp = exchange.getResponse();
+        ServiceConfig serviceConfig = getServiceConfig(clientReq);
 
-        Mono<ClientResponse> remoteRespMono = clientReqBody.single().flatMap(
+        if (!canAccessService(serviceConfig)) {
+            HttpHeaders hs = new HttpHeaders();
+            hs.add(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_PLAIN_VALUE);
+            return resp(clientResp, HttpStatus.FORBIDDEN, hs, "can't access " + serviceConfig.getId());
+        }
+
+        // beforeForward(exchange);
+
+
+        Mono<DataBuffer> clientReqBody = clientReq.getBody().single();
+
+        Mono<ClientResponse> remoteRespMono = clientReqBody.flatMap(
                 body -> {
                     String bodyStr = body.toString(StandardCharsets.UTF_8);
                     log.info("client req body: " + bodyStr);
 
-                    // TODO improve and use reactor http client instead webclient
+                    // TODO improve and use reactor http client instead
                     HttpClient hc = HttpClient.create()
                             .tcpConfiguration(client -> client
                                     .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10 * 1000)
@@ -78,7 +98,6 @@ public class RouteFilter implements WebFilter {
         } else {
             return remoteRespMono.flatMap(
                     remoteResp -> {
-                        ServerHttpResponse clientResp = exchange.getResponse();
                         HttpHeaders clientRespHeaders = clientResp.getHeaders();
                         remoteResp.headers().asHttpHeaders().entrySet().forEach(
                                 h -> {
@@ -95,6 +114,50 @@ public class RouteFilter implements WebFilter {
                     }
             );
         }
+    }
+
+    private Mono<Void> resp(ServerHttpResponse clientResp, HttpStatus status, HttpHeaders headers, String bodyContent) {
+        clientResp.setStatusCode(status);
+        headers.forEach(
+                (h, vs) -> {
+                    clientResp.getHeaders().addAll(h, vs);
+                }
+        );
+        return clientResp
+                .writeWith(Mono.just(clientResp.bufferFactory().wrap(bodyContent.getBytes())));
+    }
+
+    private boolean canAccessService(ServiceConfig sc) {
+        // List<String> blacklist = sc.getBlacklist();
+        // List<String> whitelist = sc.getWhitelist();
+        // handle blacklist or whitelist, then return result
+        return true;
+    }
+
+    private static final String serviceHeader = "svc";
+
+    private static final String fizz = "fizz";
+
+    private String getServiceId(ServerHttpRequest clientReq) {
+        List<String> vs = clientReq.getHeaders().get(serviceHeader);
+        if (vs == null || vs.isEmpty()) {
+            String p = clientReq.getPath().value();
+            String svc = null;
+            for (byte i = 9; i < p.length(); i++) {
+                if (p.charAt(i) == Constants.Symbol.FORWARD_SLASH) {
+                    svc = p.substring(fizz.length() + 2, i);
+                    break;
+                }
+            }
+            return svc;
+        } else {
+            return vs.get(0);
+        }
+    }
+
+    private ServiceConfig getServiceConfig(ServerHttpRequest clientReq) {
+        String id = getServiceId(clientReq);
+        return serviceConfigHolder.getServiceConfig(id);
     }
 
     // @Override

@@ -2,7 +2,6 @@
 	"服务id" : {
 		"blacklist" : ["*", "192.168.*.*"], // 黑白二选一
 		"whitelist" : [],
-		"webContext" : "api-gateway", // 代表 /api-gateway
 
 		// 转发请求前，做 ...
 		"beforeForward" : [

@@ -15,8 +15,6 @@ public class ServiceConfig {
 
     private List<String> whitelist;
 
-    private String webContext;
-
     private List<Object> beforeForward;
 
     private Object LoadBalance;
@@ -53,14 +51,6 @@ public class ServiceConfig {
 
     public void setWhitelist(List<String> whitelist) {
         this.whitelist = whitelist;
-    }
-
-    public String getWebContext() {
-        return webContext;
-    }
-
-    public void setWebContext(String webContext) {
-        this.webContext = webContext;
     }
 
     public List<Object> getBeforeForward() {
