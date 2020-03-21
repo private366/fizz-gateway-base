@@ -1,4 +1,4 @@
-package com.wehotel.filter;
+package com.wehotel.fizz.route;
 
 import io.netty.channel.ChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpResponse;
@@ -33,6 +32,7 @@ use:
 curl -X POST -H 'Content-type:application/json;charset=UTF-8' -d '{ "cityCode":"AR00252", "keyword":"", "loLat":23.080194, "loLng":113.293113, "distance":10, "languageCode":"1" }' http://127.0.0.1:8080/service0/api0
 to test
  */
+// 基于 filter 实现？
 
 @Component
 @Order(3) // TODO

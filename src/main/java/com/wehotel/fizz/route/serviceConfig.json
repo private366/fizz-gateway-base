@@ -1,0 +1,58 @@
+{
+	"服务id" : {
+		"blacklist" : ["*", "192.168.*.*"], // 黑白二选一
+		"whitelist" : [],
+		"webContext" : "api-gateway", // 代表 /api-gateway
+
+		// 转发请求前，做 ...
+		"beforeForward" : [
+			{
+				"id" : "log" // 调用内置的日志插件记日志
+			},
+			{
+				"id" : "auth", // 鉴权
+				"鉴权得到的会员id，存" : "放于xid请求头中，而不是默认的mid头" // 定制
+			},
+			{
+				"id" : "xxx",
+				"script" : "groovy/javascript",
+				"snippet" : "" // 执行一段脚本
+			}
+		],
+
+		// 请求转发的策略
+		"LoadBalance" : { // eg: random, weight, sticky
+		},
+		"trafficControl" : {
+		},
+		"timeout" : {
+		},
+		"failover" : {
+		},
+
+		// 转发请求后，做 ...
+		"afterForward" : [
+			{
+				"id" : "cache", // 缓存服务的响应
+				"timeunit" : "hour",
+				"ttl" : 48
+			}
+		],
+
+		// 服务内部各接口配置
+		"apis" : [
+			{
+				"path": "a/b/c", // 不支持 */x/y/z, /x/*/z 格式
+				"blacklist" : [], // 覆盖上层的配置
+				"whitelist" : [],
+
+				"beforeForward" : [],
+
+				"trafficControl" : {
+				},
+				"timeout" : {
+				}
+			}
+		]
+	}
+}
