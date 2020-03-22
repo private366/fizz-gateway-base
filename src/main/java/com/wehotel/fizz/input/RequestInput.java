@@ -267,11 +267,6 @@ public class RequestInput extends Input {
 		return null;
 	}
 
-	/**
-	 * condition.variables中需要从StepContext获取变量值的前缀
-	 */
-	private static final String STEP_CONTEXT_PARAM_PREFIX = "input ";
-
 	@Override
 	@SuppressWarnings("unchecked")
     public boolean needRun(Map<String, Object> stepContext) {
@@ -281,43 +276,7 @@ public class RequestInput extends Input {
 			return Boolean.TRUE;
 		}
 
-		Script script = new Script();
-		script.setType((String) condition.get("type"));
-		script.setSource((String) condition.get("source"));
-		Map<String, Object> variables = (Map<String, Object>) condition.get("variables");
-		if (!CollectionUtils.isEmpty(variables)) {
-			Map<String, Object> transformedVariables = new HashMap<>(variables.size());
-			Map<String, Object> rules = new HashMap<>(variables.size());
-			for (Entry<String, Object> entry : variables.entrySet()) {
-				String key = entry.getKey();
-				Object value = entry.getValue();
-				if (value instanceof String && ((String) value).startsWith(STEP_CONTEXT_PARAM_PREFIX)) {
-					// 需要从Step上下文中获取参数
-					rules.put(key, ((String) value).substring(STEP_CONTEXT_PARAM_PREFIX.length()));
-				} else {
-					transformedVariables.put(key, value);
-				}
-			}
-			if (rules.size() > 0) {
-				Map<String, Object> result = PathMapping.transform(stepContext, rules);
-				if (!CollectionUtils.isEmpty(result)) {
-					// 从Step上下文拿到了值
-					transformedVariables.putAll(result);
-				}
-			}
-
-			variables = transformedVariables;
-		}
-		Map<String, Object> ctx = new HashMap<>(4);
-		ctx.put("variables", variables);
-		ctx.put("context", stepContext);
-
-		try {
-			return (boolean)ScriptUtils.execute(script, ctx);
-		} catch (ScriptException e) {
-			LOGGER.warn("execute script failed", e);
-			throw new RuntimeException("execute script failed");
-		}
+		return (boolean) ScriptUtils.execute(condition, stepContext);
     }
 
     @Override

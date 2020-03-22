@@ -43,7 +43,10 @@ public class ConfigLoader {
 		clientInputConfig.setMethod(docCtx.read("$.config.method"));
 		clientInputConfig.setPath(docCtx.read("$.config.path"));
 		clientInputConfig.setType(InputType.valueOf(docCtx.read("$.config.type")));
-		clientInputConfig.setRequestBodySchema(docCtx.read("$.config.requestBodySchema"));
+		clientInputConfig.setBodyDef(docCtx.read("$.config.bodyDef"));
+		clientInputConfig.setHeadersDef(docCtx.read("$.config.headersDef"));
+		clientInputConfig.setParamsDef(docCtx.read("$.config.paramsDef"));
+		clientInputConfig.setScriptValidate(docCtx.read("$.config.scriptValidate"));
 		input.setConfig(clientInputConfig);
 		return input;
 	}

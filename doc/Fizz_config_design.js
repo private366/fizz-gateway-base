@@ -7,20 +7,29 @@ var aggrAPIConfig = {
         path: "/aggr-hotel/hotel/rates", // 格式：分组名+路径， 分组名以aggr-开头，表示聚合接口
         headers: { // 
             "a": "b"
-        }, 
-        fields:[ // 定义聚合接口参数
-            {
-                field: "userId",
-                name: "用户名",
-                desc: "描述",
-                type: "string",
-                required: true,
-                validates: [
-                    // TODO
-                ]
+        },
+        headersDef: { // 可选，定义聚合接口header部分参数，使用JSON Schema规范（详见：http://json-schema.org/specification.html），用于参数验证，接口文档生成
+            type:"object",
+            properties:{
+                appId:{
+                    type:"string",
+                    title:"应用ID",
+                    description:"描述"
+                }
+            },
+            required: ["appId"]
+        },
+        paramsDef: { // 可选，定义聚合接口parameter部分参数，使用JSON Schema规范（详见：http://json-schema.org/specification.html），用于参数验证，接口文档生成
+            type:"object",
+            properties:{
+                lang:{
+                    type:"string",
+                    title:"语言",
+                    description:"描述"
+                }
             }
-        ],
-        requestBodySchema: { // 定义聚合接口参数,使用JSON Schema规范，详见：http://json-schema.org/specification.html
+        },
+        bodyDef: { // 可选，定义聚合接口body部分参数，使用JSON Schema规范（详见：http://json-schema.org/specification.html），用于参数验证，接口文档生成
             type:"object",
             properties:{
                 userId:{
@@ -30,6 +39,13 @@ var aggrAPIConfig = {
                 }
             },
             required: ["userId"]
+        },
+        scriptValidate: { // 可选，用于headersDef、paramsDef、bodyDef无法覆盖的入参验证场景
+            type: "", // groovy
+            source: "", // 脚本返回List<String>对象，null:验证通过，List:错误信息列表
+            variables: { // 环境变量
+
+            }
         },
         dataMapping: {// 聚合接口数据转换规则
             request:{

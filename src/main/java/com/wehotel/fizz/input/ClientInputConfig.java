@@ -1,19 +1,17 @@
 package com.wehotel.fizz.input;
 
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
-
-import org.springframework.util.MultiValueMap;
-import org.springframework.web.util.UriComponentsBuilder;
 
 public class ClientInputConfig extends InputConfig {
 	
 	private String path;
 	private String method;
 	private Map<String, Object> headers = new HashMap<String, Object>();
-	private Map<String, Object> requestBodySchema;
+	private Map<String, Object> bodyDef;
+    private Map<String, Object> headersDef;
+    private Map<String, Object> paramsDef;
+    private Map<String, Object> scriptValidate;
 
 	@SuppressWarnings("unchecked")
 	public ClientInputConfig(Map configBody) {
@@ -27,9 +25,18 @@ public class ClientInputConfig extends InputConfig {
 			setMethod("GET");
 		}
 
-		if (configBody.get("requestBodySchema") != null) {
-			requestBodySchema = ((Map) configBody.get("requestBodySchema"));
+		if (configBody.get("bodyDef") != null) {
+			bodyDef = ((Map) configBody.get("bodyDef"));
 		}
+        if (configBody.get("paramsDef") != null) {
+            paramsDef = ((Map) configBody.get("paramsDef"));
+        }
+        if (configBody.get("headersDef") != null) {
+            headersDef = ((Map) configBody.get("headersDef"));
+        }
+        if (configBody.get("scriptValidate") != null) {
+            scriptValidate = ((Map) configBody.get("scriptValidate"));
+        }
 	}
 	
 	public ClientInputConfig() {
@@ -60,11 +67,35 @@ public class ClientInputConfig extends InputConfig {
 		this.method = method;
 	}
 
-	public Map<String, Object> getRequestBodySchema() {
-		return requestBodySchema;
+	public Map<String, Object> getBodyDef() {
+		return bodyDef;
 	}
 
-	public void setRequestBodySchema(Map<String, Object> requestBodySchema) {
-		this.requestBodySchema = requestBodySchema;
+	public void setBodyDef(Map<String, Object> bodyDef) {
+		this.bodyDef = bodyDef;
 	}
+
+    public Map<String, Object> getHeadersDef() {
+        return headersDef;
+    }
+
+    public void setHeadersDef(Map<String, Object> headersDef) {
+        this.headersDef = headersDef;
+    }
+
+    public Map<String, Object> getParamsDef() {
+        return paramsDef;
+    }
+
+    public void setParamsDef(Map<String, Object> paramsDef) {
+        this.paramsDef = paramsDef;
+    }
+
+    public Map<String, Object> getScriptValidate() {
+        return scriptValidate;
+    }
+
+    public void setScriptValidate(Map<String, Object> scriptValidate) {
+        this.scriptValidate = scriptValidate;
+    }
 }

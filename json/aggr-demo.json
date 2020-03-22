@@ -4,7 +4,38 @@
         "type": "REQUEST",
         "method": "POST",
         "path": "/aggr-demo/hotel/rates",
-        "requestBodySchema": {
+        "headersDef": {
+            "type":"object",
+            "properties":{
+                "app-id":{
+                    "type":"string",
+                    "title":"应用ID",
+                    "description":"应用唯一标识"
+                },
+                "timestamp":{
+                    "type":"integer",
+                    "title":"时间",
+                    "description":"当前时间，例如1540281144468，跟系统相差不超过10分钟"
+                },
+                "sign":{
+                    "type":"string",
+                    "title":"签名",
+                    "description":"签名，生成方式 Token = DigestUtils.sha256Hex((appId + \"-\" + timestamp + '-' + key).getBytes(Charset.forName(“UTF-8”)));"
+                }
+            },
+            "required": ["app-id", "timestamp", "sign"]
+        },
+        "paramsDef": {
+            "type":"object",
+            "properties":{
+                "lang":{
+                    "type":"string",
+                    "title":"语言",
+                    "description":"描述"
+                }
+            }
+        },
+        "bodyDef": {
             "type":"object",
             "properties":{
                 "userId":{
@@ -15,7 +46,17 @@
             },
             "required": ["userId"]
         },
-
+        "scriptValidate": {
+            "type": "groovy",
+            "source": "import org.apache.commons.codec.digest.DigestUtils; import java.nio.charset.StandardCharsets; import java.util.List; import java.util.ArrayList; String trueSign = DigestUtils.sha256Hex((variables.get(\"app-id\") + \"-\" + variables.get(\"input-timestamp\") + '-' + variables.get(\"key\")).getBytes(StandardCharsets.UTF_8));  if (trueSign.equals(variables.get(\"input-sign\"))) {return null;} else {List<String> errorList = new ArrayList<>(1); errorList.add(\"验签失败\"); return errorList;}",
+            "variables": {
+                "app-id": "a9d1526d-e50b-42bf-8e86-ce978cdd1e99",
+                "key": "a3b93780-d517-4a7e-9b87-9236e052be6f",
+                "input-app-id": "input input.request.headers.app-id",
+                "input-timestamp": "input input.request.headers.timestamp",
+                "input-sign": "input input.request.headers.sign"
+            }
+        },
         "dataMapping": {
             "response": {
            		"headers": {
