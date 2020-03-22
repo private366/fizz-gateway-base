@@ -5,12 +5,12 @@
 
 		// 转发请求前，做 ...
 		"beforeForward" : [
-			{
+			{ // 对应一个com.wehotel.fizz.route.Handler
 				"id" : "log" // 调用内置的日志插件记日志
 			},
 			{
 				"id" : "auth", // 鉴权
-				"鉴权得到的会员id，存" : "放于xid请求头中，而不是默认的mid头" // 定制
+				"config" : "{\"鉴权得到的会员id，存\" : \"放于xid请求头中，而不是默认的mid头（定制）\"}" // Handler的配置对应的json字符串
 			},
 			{
 				"id" : "xxx",

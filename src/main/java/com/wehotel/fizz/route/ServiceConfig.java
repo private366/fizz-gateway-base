@@ -15,7 +15,7 @@ public class ServiceConfig {
 
     private List<String> whitelist;
 
-    private List<Object> beforeForward;
+    private List<HandlerConfig> beforeForward;
 
     private Object LoadBalance;
 
@@ -53,11 +53,11 @@ public class ServiceConfig {
         this.whitelist = whitelist;
     }
 
-    public List<Object> getBeforeForward() {
+    public List<HandlerConfig> getBeforeForward() {
         return beforeForward;
     }
 
-    public void setBeforeForward(List<Object> beforeForward) {
+    public void setBeforeForward(List<HandlerConfig> beforeForward) {
         this.beforeForward = beforeForward;
     }
 

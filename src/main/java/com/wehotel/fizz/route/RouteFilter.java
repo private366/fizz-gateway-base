@@ -6,11 +6,13 @@ import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationContext;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpResponse;
@@ -20,13 +22,13 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 
 import javax.annotation.Resource;
+import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -57,23 +59,39 @@ public class RouteFilter implements WebFilter {
         ServerHttpResponse clientResp = exchange.getResponse();
         ServiceConfig serviceConfig = getServiceConfig(clientReq);
 
-        if (!canAccessService(serviceConfig)) {
-            HttpHeaders hs = new HttpHeaders();
-            hs.add(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_PLAIN_VALUE);
-            return resp(clientResp, HttpStatus.FORBIDDEN, hs, "can't access " + serviceConfig.getId());
-        }
+        // 4 test
+        serviceConfig = new ServiceConfig();
+        List<HandlerConfig> handlerConfigs = new ArrayList<>();
+        serviceConfig.setBeforeForward(handlerConfigs); // TODO think about the scene that apis config override service config, serviceConfig.json need refactor
+        HandlerConfig handlerConfig = new HandlerConfig("auth", "{'midStoreInHeader':'xid'}");
+        handlerConfigs.add(handlerConfig);
 
-        // beforeForward(exchange);
+        // to be handler
+        // if (!canAccessService(serviceConfig)) {
+        //     HttpHeaders hs = new HttpHeaders();
+        //     hs.add(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_PLAIN_VALUE);
+        //     return resp(clientResp, HttpStatus.FORBIDDEN, hs, "can't access " + serviceConfig.getId());
+        //     // TODO design client response model
+        // }
 
-
+        RoutingContext rc = new RoutingContext(exchange);
         Mono<DataBuffer> clientReqBody = clientReq.getBody().single();
+        final DataBuffer[] retainBody = new DataBuffer[1];
 
-        Mono<ClientResponse> remoteRespMono = clientReqBody.flatMap(
+        Mono<HandleResult> beforeForwardRes = clientReqBody.flatMap(
                 body -> {
                     String bodyStr = body.toString(StandardCharsets.UTF_8);
                     log.info("client req body: " + bodyStr);
+                    retainBody[0] = DataBufferUtils.retain(body); // !
+                    return executeHandlers(rc, handlerConfigs);
+                }
+        );
 
-                    // TODO improve and use reactor http client instead
+        Mono<ClientResponse> remoteRespMono = beforeForwardRes.flatMap(
+                hr -> {
+                    log.info("______" + rc.get(AuthHandler.AUTH_HANDLER).data.get(AuthHandler.AUTH_RES));
+
+                    // TODO use reactor netty http client instead
                     HttpClient hc = HttpClient.create()
                             .tcpConfiguration(client -> client
                                     .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10 * 1000)
@@ -81,14 +99,17 @@ public class RouteFilter implements WebFilter {
                                             .addHandlerLast(new WriteTimeoutHandler(10))));
                     WebClient wc = WebClient.builder().clientConnector(new ReactorClientHttpConnector(hc)).build();
 
-                    String remoteUrl = "http://172.25.63.186:9999/inn/suggest"; // TODO
+                    // TODO
+                    // 从注册中心找个转过去
+                    // 负载均衡等...
+                    String remoteUrl = "http://172.25.63.186:9999/inn/suggest";
                     WebClient.RequestBodySpec remoteReq = wc.method(clientReq.getMethod()).uri(remoteUrl);
 
                     clientReq.getHeaders().entrySet().forEach(entry -> {
                         List<String> hvs = entry.getValue();
                         remoteReq.header(entry.getKey(), hvs.toArray(new String[hvs.size()]));
                     });
-                    return remoteReq.bodyValue(body).exchange();
+                    return remoteReq.bodyValue(retainBody[0]).exchange();
                 }
         );
 
@@ -105,6 +126,9 @@ public class RouteFilter implements WebFilter {
                                 }
                         );
                         Mono<DataBuffer> remoteRespBody = remoteResp.bodyToMono(DataBuffer.class);
+
+                        // serviceConfig.getAfterForward(); // then do something
+
                         Mono<DataBuffer> m = remoteRespBody.flatMap(b -> {
                             String bs = b.toString(StandardCharsets.UTF_8);
                             log.info("remote resp body: " + bs);
@@ -114,6 +138,38 @@ public class RouteFilter implements WebFilter {
                     }
             );
         }
+    }
+
+    private Mono<HandleResult> executeHandlers(RoutingContext rc, List<HandlerConfig> handlerConfigs) {
+
+        log.info("start execute handlers ---------------");
+        ApplicationContext appCtx = rc.getServerWebExchange().getApplicationContext();
+        Mono<HandleResult> prevMhr = null;
+        String[] prevHid = {null};
+
+        for (byte i = 0; i < handlerConfigs.size(); i++) {
+            HandlerConfig hc = handlerConfigs.get(i);
+            Handler h = appCtx.getBean(hc.id, Handler.class);
+            if (i == 0) {
+                prevMhr = h.handle(rc, hc.json);
+            } else {
+                prevMhr = prevMhr.flatMap(
+                        hr -> {
+                            rc.put(prevHid[0], hr);
+                            return h.handle(rc, hc.json);
+                        }
+                );
+            }
+            prevHid[0] = hc.id;
+        }
+        Mono<HandleResult> mhr = prevMhr.flatMap( // flat map is every where ...
+                hr -> {
+                    rc.put(prevHid[0], hr);
+                    return Mono.just(hr);
+                }
+        );
+        log.info("end execute handlers ---------------");
+        return mhr;
     }
 
     private Mono<Void> resp(ServerHttpResponse clientResp, HttpStatus status, HttpHeaders headers, String bodyContent) {
