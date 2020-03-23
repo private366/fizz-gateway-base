@@ -7,11 +7,13 @@ import java.util.Map;
 
 import javax.script.ScriptException;
 
-import org.hibernate.validator.internal.util.privilegedactions.GetClassLoader;
+import com.wehotel.fizz.input.ClientInputConfig;
+import com.wehotel.fizz.input.InputConfig;
+import com.wehotel.util.JsonSchemaUtils;
+import com.wehotel.util.ScriptUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import com.alibaba.fastjson.JSON;
@@ -37,6 +39,19 @@ public class Pipeline {
 	
 	public Mono<AggregateResult> run(Input input, Map<String, Object> clientInput) {
 		this.initialStepContext(clientInput);
+		List<String> validateErrorList = inputVialdate(input, clientInput);
+		if (!CollectionUtils.isEmpty(validateErrorList)) {
+			String validateMsg = StringUtils.collectionToCommaDelimitedString(validateErrorList);
+			// 将验证错误信息放入上下文
+			stepContext.put("validateMsg", validateMsg);
+			InputConfig config = input.getConfig();
+			Map<String, Object> validateResponse = ((ClientInputConfig) config).getValidateResponse();
+			input.getConfig().getDataMapping().put("response", validateResponse);
+			// 数据转换
+			AggregateResult aggregateResult = this.doInputDataMapping(input);
+			return Mono.just(aggregateResult);
+		}
+
 		LinkedList<Step> opSteps = (LinkedList<Step>) steps.clone();
 		Step step1 = opSteps.removeFirst();
 		step1.beforeRun(stepContext, null);
@@ -209,5 +224,48 @@ public class Pipeline {
 		aggResult.setBody((Map<String, Object>) response.get("body"));
 		aggResult.setHeaders(MapUtil.toMultiValueMap((Map<String, Object>) response.get("headers")));
 		return aggResult;
+	}
+
+	@SuppressWarnings("unchecked")
+	private List<String> inputVialdate(Input input, Map<String, Object> clientInput) {
+		InputConfig config = input.getConfig();
+		if (config instanceof ClientInputConfig) {
+			Map<String, Object> headersDef = ((ClientInputConfig) config).getHeadersDef();
+			if (!CollectionUtils.isEmpty(headersDef)) {
+				// 验证headers入参是否符合要求
+				List<String> errorList = JsonSchemaUtils.validateAllowValueStr(JSON.toJSONString(headersDef), JSON.toJSONString(clientInput.get("headers")));
+				if (!CollectionUtils.isEmpty(errorList)) {
+					return errorList;
+				}
+			}
+
+			Map<String, Object> paramsDef = ((ClientInputConfig) config).getParamsDef();
+			if (!CollectionUtils.isEmpty(paramsDef)) {
+				// 验证params入参是否符合要求
+				List<String> errorList = JsonSchemaUtils.validateAllowValueStr(JSON.toJSONString(paramsDef), JSON.toJSONString(clientInput.get("params")));
+				if (!CollectionUtils.isEmpty(errorList)) {
+					return errorList;
+				}
+			}
+
+			Map<String, Object> bodyDef = ((ClientInputConfig) config).getBodyDef();
+			if (!CollectionUtils.isEmpty(bodyDef)) {
+				// 验证body入参是否符合要求
+				List<String> errorList = JsonSchemaUtils.validate(JSON.toJSONString(bodyDef), JSON.toJSONString(clientInput.get("body")));
+				if (!CollectionUtils.isEmpty(errorList)) {
+					return errorList;
+				}
+			}
+
+			Map<String, Object> scriptValidate = ((ClientInputConfig) config).getScriptValidate();
+			if (!CollectionUtils.isEmpty(scriptValidate)) {
+				// 验证入参是否符合脚本要求
+				List<String> errorList = (List<String>) ScriptUtils.execute(scriptValidate, stepContext);
+				if (!CollectionUtils.isEmpty(errorList)) {
+					return errorList;
+				}
+			}
+		}
+		return null;
 	}
 }

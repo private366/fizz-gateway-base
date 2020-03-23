@@ -56,7 +56,7 @@ public class ScriptUtilsTests {
                 "        person['sex'] = 'male';" +
                 "        var resJsonStr = JSON.stringify(person);" +
                 "        return {'clazz':'com.wehotel.util.Person','resJsonStr':resJsonStr};" +
-                "    } " +
+                "    } "  +
                 "}"
         );
         Person person = new Person();

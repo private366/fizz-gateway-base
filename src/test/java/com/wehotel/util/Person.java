@@ -1,5 +1,9 @@
 package com.wehotel.util;
 
+/**
+ * @author Lancer Hong
+ */
+
 public class Person {
 
     private String name;
