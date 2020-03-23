@@ -57,6 +57,19 @@
                 "input-sign": "input input.request.headers.sign"
             }
         },
+        "validateResponse":{
+            "fixedBody": {
+                "code": -411
+            },
+            "fixedHeaders": {
+                "a":"b"
+            },
+            "headers": {
+            },
+            "body": {
+                "msg": "validateMsg"
+            }
+        },
         "dataMapping": {
             "response": {
            		"headers": {

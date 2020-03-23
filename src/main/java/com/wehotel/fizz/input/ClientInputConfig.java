@@ -12,6 +12,7 @@ public class ClientInputConfig extends InputConfig {
     private Map<String, Object> headersDef;
     private Map<String, Object> paramsDef;
     private Map<String, Object> scriptValidate;
+    private Map<String, Object> validateResponse;
 
 	@SuppressWarnings("unchecked")
 	public ClientInputConfig(Map configBody) {
@@ -36,6 +37,9 @@ public class ClientInputConfig extends InputConfig {
         }
         if (configBody.get("scriptValidate") != null) {
             scriptValidate = ((Map) configBody.get("scriptValidate"));
+        }
+        if (configBody.get("validateResponse") != null) {
+            validateResponse = ((Map) configBody.get("validateResponse"));
         }
 	}
 	
@@ -97,5 +101,13 @@ public class ClientInputConfig extends InputConfig {
 
     public void setScriptValidate(Map<String, Object> scriptValidate) {
         this.scriptValidate = scriptValidate;
+    }
+
+    public Map<String, Object> getValidateResponse() {
+        return validateResponse;
+    }
+
+    public void setValidateResponse(Map<String, Object> validateResponse) {
+        this.validateResponse = validateResponse;
     }
 }

@@ -41,12 +41,14 @@ public class Pipeline {
 		this.initialStepContext(clientInput);
 		List<String> validateErrorList = inputVialdate(input, clientInput);
 		if (!CollectionUtils.isEmpty(validateErrorList)) {
-			// 入参验证失败
-			// TODO by zhongjie 错误响应
-			AggregateResult aggregateResult = new AggregateResult();
-			Map<String, Object> body = new HashMap<>(2);
-			body.put("msg", StringUtils.collectionToCommaDelimitedString(validateErrorList));
-			aggregateResult.setBody(body);
+			String validateMsg = StringUtils.collectionToCommaDelimitedString(validateErrorList);
+			// 将验证错误信息放入上下文
+			stepContext.put("validateMsg", validateMsg);
+			InputConfig config = input.getConfig();
+			Map<String, Object> validateResponse = ((ClientInputConfig) config).getValidateResponse();
+			input.getConfig().getDataMapping().put("response", validateResponse);
+			// 数据转换
+			AggregateResult aggregateResult = this.doInputDataMapping(input);
 			return Mono.just(aggregateResult);
 		}
 

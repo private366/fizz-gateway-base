@@ -47,6 +47,7 @@ public class ConfigLoader {
 		clientInputConfig.setHeadersDef(docCtx.read("$.config.headersDef"));
 		clientInputConfig.setParamsDef(docCtx.read("$.config.paramsDef"));
 		clientInputConfig.setScriptValidate(docCtx.read("$.config.scriptValidate"));
+		clientInputConfig.setValidateResponse(docCtx.read("$.config.validateResponse"));
 		input.setConfig(clientInputConfig);
 		return input;
 	}

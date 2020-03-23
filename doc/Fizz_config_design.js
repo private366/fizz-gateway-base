@@ -47,6 +47,27 @@ var aggrAPIConfig = {
 
             }
         },
+        validateResponse:{// 入参验证失败响应，处理方式同dataMapping.response
+            fixedBody: { // 固定的body
+                "code": -411
+            },
+            fixedHeaders: {// 固定header
+                "a":"b"
+            },
+            headers: { // 引用的header
+            },
+            body: { // 引用的header
+                "msg": "validateMsg"
+            },
+            script: {
+                type: "", // groovy
+                source: "",
+                variables: { // 环境变量
+
+                }
+
+            }
+        },
         dataMapping: {// 聚合接口数据转换规则
             request:{
                 script: { // 校验聚合入参是否合法
