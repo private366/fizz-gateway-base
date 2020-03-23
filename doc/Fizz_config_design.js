@@ -8,18 +8,6 @@ var aggrAPIConfig = {
         headers: { // 
             "a": "b"
         }, 
-        fields:[ // 定义聚合接口参数
-            {
-                field: "userId",
-                name: "用户名",
-                desc: "描述",
-                type: "string",
-                required: true,
-                validates: [
-                    // TODO
-                ]
-            }
-        ],
         requestBodySchema: { // 定义聚合接口参数,使用JSON Schema规范，详见：http://json-schema.org/specification.html
             type:"object",
             properties:{
@@ -43,7 +31,7 @@ var aggrAPIConfig = {
             },
             response:{
             	fixedBody: { // 固定的body
-            		"a":"b"
+            		"code":"b"
                 },
                 fixedHeaders: {// 固定header
                 	"a":"b"
