@@ -29,6 +29,10 @@ public class CustomValidator implements Validator {
         if (schema instanceof NumberSchema && input instanceof String) {
             // input的是字符串类型，尝试转换成对应的数字类型
             input = JSONObject.stringToValue((String) input);
+        } else
+        if (schema instanceof BooleanSchema && input instanceof String) {
+            // input的是字符串类型，尝试转换成对应的布尔类型
+            input = JSONObject.stringToValue((String) input);
         }
 
         ValidationFailureReporter failureReporter = createFailureReporter(schema);

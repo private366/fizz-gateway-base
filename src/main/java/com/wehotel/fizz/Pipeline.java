@@ -231,7 +231,7 @@ public class Pipeline {
 			Map<String, Object> headersDef = ((ClientInputConfig) config).getHeadersDef();
 			if (!CollectionUtils.isEmpty(headersDef)) {
 				// 验证headers入参是否符合要求
-				List<String> errorList = JsonSchemaUtils.validateAllowNumberStr(JSON.toJSONString(headersDef), JSON.toJSONString(clientInput.get("headers")));
+				List<String> errorList = JsonSchemaUtils.validateAllowValueStr(JSON.toJSONString(headersDef), JSON.toJSONString(clientInput.get("headers")));
 				if (!CollectionUtils.isEmpty(errorList)) {
 					return errorList;
 				}
@@ -240,7 +240,7 @@ public class Pipeline {
 			Map<String, Object> paramsDef = ((ClientInputConfig) config).getParamsDef();
 			if (!CollectionUtils.isEmpty(paramsDef)) {
 				// 验证params入参是否符合要求
-				List<String> errorList = JsonSchemaUtils.validateAllowNumberStr(JSON.toJSONString(paramsDef), JSON.toJSONString(clientInput.get("params")));
+				List<String> errorList = JsonSchemaUtils.validateAllowValueStr(JSON.toJSONString(paramsDef), JSON.toJSONString(clientInput.get("params")));
 				if (!CollectionUtils.isEmpty(errorList)) {
 					return errorList;
 				}

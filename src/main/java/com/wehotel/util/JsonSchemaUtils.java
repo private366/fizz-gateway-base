@@ -38,12 +38,12 @@ public class JsonSchemaUtils {
     }
 
     /**
-     * 验证JSON字符串是否符合JSON Schema要求，允许数字是字符串格式
+     * 验证JSON字符串是否符合JSON Schema要求，允许数字\布尔类型 是字符串格式
      * @param jsonSchema JSON Schema
      * @param inputJson JSON字符串
      * @return null：验证通过，List：报错信息列表
      */
-    public static List<String> validateAllowNumberStr(String jsonSchema, String inputJson) {
+    public static List<String> validateAllowValueStr(String jsonSchema, String inputJson) {
         try {
             CheckJsonResult checkJsonResult = checkJson(jsonSchema, inputJson);
             if (checkJsonResult.errorList != null) {

@@ -18,6 +18,15 @@ public class CustomValidatingVisitor extends ValidatingVisitor {
             // input的是字符串类型，尝试转换成对应的数字类型
             subject = JSONObject.stringToValue((String) subject);
         }
-        numberSchema.accept(new NumberSchemaValidatingVisitor(subject, this));
+        super.visitNumberSchema(numberSchema);
+    }
+
+    @Override
+    void visitBooleanSchema(BooleanSchema booleanSchema) {
+        if (subject instanceof String) {
+            // input的是字符串类型，尝试转换成对应的布尔类型
+            subject = JSONObject.stringToValue((String) subject);
+        }
+        super.visitBooleanSchema(booleanSchema);
     }
 }

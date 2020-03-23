@@ -41,6 +41,8 @@ class JsonSchemaUtilsTests {
         params.put("key1", "value1");
         params.put("key2", Lists.newArrayList("21", "22.123", "23"));
         params.put("key3", "3");
+        params.put("key4", "true");
+        params.put("key5", true);
 
         /*
         {
@@ -57,12 +59,18 @@ class JsonSchemaUtilsTests {
                         },
                 "key3" : {
                             "type" : "integer"
+                        },
+                "key4" : {
+                            "type" : "boolean"
+                        },
+                "key5" : {
+                            "type" : "boolean"
                         }
             },
             "required" : ["key1" , "key2", "key3"]
         }
         */
-        List<String> validateResult = JsonSchemaUtils.validateAllowNumberStr("{\n" +
+        List<String> validateResult = JsonSchemaUtils.validateAllowValueStr("{\n" +
                 "            \"type\" : \"object\",\n" +
                 "            \"properties\" : {\n" +
                 "                \"key1\" : {\n" +
@@ -76,6 +84,12 @@ class JsonSchemaUtilsTests {
                 "                        },\n" +
                 "                \"key3\" : {\n" +
                 "                            \"type\" : \"integer\"\n" +
+                "                        },\n" +
+                "                \"key4\" : {\n" +
+                "                            \"type\" : \"boolean\"\n" +
+                "                        },\n" +
+                "                \"key5\" : {\n" +
+                "                            \"type\" : \"boolean\"\n" +
                 "                        }\n" +
                 "            },\n" +
                 "            \"required\" : [\"key1\" , \"key2\", \"key3\"]\n" +
